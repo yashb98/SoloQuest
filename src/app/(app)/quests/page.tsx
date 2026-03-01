@@ -51,10 +51,34 @@ export default function QuestsPage() {
     }
   };
 
+  const handleUndo = async (questId: number) => {
+    setLoadingQuestId(questId);
+    try {
+      const res = await fetch("/api/quests/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questId, undo: true }),
+      });
+      const data = await res.json();
+      if (data.success && data.undone) {
+        setQuests((prev) =>
+          prev.map((q) =>
+            q.id === questId ? { ...q, isCompleted: false } : q
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to undo quest:", error);
+    } finally {
+      setLoadingQuestId(null);
+    }
+  };
+
   return (
     <QuestBoard
       quests={quests}
       onComplete={handleComplete}
+      onUndo={handleUndo}
       loadingQuestId={loadingQuestId}
     />
   );

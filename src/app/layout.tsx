@@ -2,14 +2,14 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Solo Quest — Hunter YB-001",
+  title: "Solo Quest — Full Gamification v2.0",
   description:
-    "Gamified productivity system. Complete quests. Earn XP. Level up. The System is watching.",
+    "Gamified personal productivity and learning management system.",
   manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0E1A",
+  themeColor: "#FAF9F6",
   width: "device-width",
   initialScale: 1,
 };
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className="bg-sq-bg text-sq-text min-h-screen antialiased">
         {children}
       </body>

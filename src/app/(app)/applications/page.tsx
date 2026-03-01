@@ -80,7 +80,7 @@ export default function ApplicationsPage() {
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-8 bg-sq-border/30 rounded w-48" />
+        <div className="h-8 bg-sq-hover rounded w-48" />
         {[1, 2, 3].map((i) => <div key={i} className="sq-panel p-6 h-24" />)}
       </div>
     );
@@ -89,7 +89,7 @@ export default function ApplicationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display font-bold text-2xl text-sq-gold">JOB TRACKER</h1>
+        <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">Job Tracker</h1>
         <button onClick={() => setShowForm(!showForm)} className="sq-button-gold text-sm flex items-center gap-1">
           <Plus className="w-4 h-4" /> Add
         </button>
@@ -99,8 +99,8 @@ export default function ApplicationsPage() {
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <button
           onClick={() => setFilter("all")}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-md font-display font-semibold text-xs ${
-            filter === "all" ? "bg-sq-gold/20 text-sq-gold border border-sq-gold/40" : "bg-sq-bg text-sq-muted border border-sq-border"
+          className={`flex-shrink-0 px-3 py-1.5 rounded-md font-semibold text-xs ${
+            filter === "all" ? "bg-[#FFF3ED] text-sq-accent border-2 border-sq-accent" : "bg-sq-bg text-sq-muted border border-sq-border"
           }`}
         >
           All {apps.length}
@@ -112,8 +112,8 @@ export default function ApplicationsPage() {
             <button
               key={stage.key}
               onClick={() => setFilter(stage.key)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-md font-display font-semibold text-xs ${
-                filter === stage.key ? "bg-sq-gold/20 text-sq-gold border border-sq-gold/40" : "bg-sq-bg text-sq-muted border border-sq-border"
+              className={`flex-shrink-0 px-3 py-1.5 rounded-md font-semibold text-xs ${
+                filter === stage.key ? "bg-[#FFF3ED] text-sq-accent border-2 border-sq-accent" : "bg-sq-bg text-sq-muted border border-sq-border"
               }`}
             >
               {stage.label} {count}
@@ -132,7 +132,7 @@ export default function ApplicationsPage() {
             className="sq-panel p-4 space-y-3"
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-sm text-sq-gold">New Application</h3>
+              <h3 className="font-bold text-sm text-sq-gold">New Application</h3>
               <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-sq-muted" /></button>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -156,15 +156,15 @@ export default function ApplicationsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-display font-bold text-sm text-sq-text">{app.company}</h3>
-                    <span className={`font-mono text-[10px] font-bold ${stage?.color || "text-sq-muted"}`}>
+                    <h3 className="font-bold text-sm text-sq-text">{app.company}</h3>
+                    <span className={`text-[10px] font-bold ${stage?.color || "text-sq-muted"}`}>
                       {stage?.label?.toUpperCase() || app.status}
                     </span>
                   </div>
-                  <p className="font-mono text-xs text-sq-muted mt-0.5">{app.role}</p>
+                  <p className="text-xs text-sq-muted mt-0.5">{app.role}</p>
                   <div className="flex items-center gap-3 mt-2">
-                    {app.salaryRange && <span className="font-mono text-[10px] text-sq-gold">{app.salaryRange}</span>}
-                    <span className="font-mono text-[10px] text-sq-muted">
+                    {app.salaryRange && <span className="text-[10px] text-sq-gold">{app.salaryRange}</span>}
+                    <span className="text-[10px] text-sq-muted">
                       {new Date(app.dateApplied).toLocaleDateString()}
                     </span>
                     {app.link && (
@@ -178,7 +178,7 @@ export default function ApplicationsPage() {
                   {nextStage && app.status !== "rejected" && app.status !== "accepted" && (
                     <button
                       onClick={() => handleUpdateStatus(app.id, nextStage)}
-                      className="px-2 py-1 rounded text-[10px] font-display font-bold border border-sq-green/30 text-sq-green hover:bg-sq-green/10 flex items-center gap-1"
+                      className="px-2 py-1 rounded text-[10px] font-bold border border-sq-green/30 text-sq-green hover:bg-sq-green/10 flex items-center gap-1"
                     >
                       <ChevronRight className="w-3 h-3" />
                       {STAGES.find((s) => s.key === nextStage)?.label}
@@ -187,7 +187,7 @@ export default function ApplicationsPage() {
                   {app.status !== "rejected" && app.status !== "accepted" && (
                     <button
                       onClick={() => handleUpdateStatus(app.id, "rejected")}
-                      className="px-2 py-1 rounded text-[10px] font-display font-bold border border-red-500/30 text-red-400 hover:bg-red-500/10"
+                      className="px-2 py-1 rounded text-[10px] font-bold border border-red-500/30 text-red-400 hover:bg-red-500/10"
                     >
                       Reject
                     </button>
@@ -200,7 +200,7 @@ export default function ApplicationsPage() {
         {filtered.length === 0 && (
           <div className="sq-panel p-8 text-center">
             <Briefcase className="w-8 h-8 text-sq-muted mx-auto mb-2" />
-            <p className="font-mono text-sm text-sq-muted">No applications yet. Start tracking your job search.</p>
+            <p className="text-sm text-sq-muted">No applications yet. Start tracking your job search.</p>
           </div>
         )}
       </div>

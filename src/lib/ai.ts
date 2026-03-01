@@ -1,11 +1,78 @@
-// lib/ai.ts — Claude AI client and prompt templates
+// lib/ai.ts — AI client with Anthropic primary + Mistral API fallback
+// Priority: Anthropic Claude → Mistral API → graceful empty
+// Mistral free tier: ~2 req/min, all models available, great for structured output
 import Anthropic from "@anthropic-ai/sdk";
+import { Mistral } from "@mistralai/mistralai";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
-});
+const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
+const MISTRAL_KEY = process.env.MISTRAL_API_KEY || "";
+const CLAUDE_MODEL = "claude-sonnet-4-6";
+// Free tier has access to all models — mistral-small-latest is fast and great at structured tasks
+const MISTRAL_MODEL = process.env.MISTRAL_MODEL || "mistral-small-latest";
 
-const MODEL = "claude-sonnet-4-6";
+const anthropic = ANTHROPIC_KEY && ANTHROPIC_KEY !== "your_anthropic_api_key_here"
+  ? new Anthropic({ apiKey: ANTHROPIC_KEY })
+  : null;
+
+const mistral = MISTRAL_KEY && MISTRAL_KEY !== "your_mistral_api_key_here"
+  ? new Mistral({ apiKey: MISTRAL_KEY })
+  : null;
+
+// --- Generic AI call with Anthropic → Mistral fallback ---
+async function aiCall(
+  prompt: string,
+  systemPrompt?: string,
+  maxTokens: number = 500,
+  jsonMode: boolean = false
+): Promise<string> {
+  // Try Anthropic first
+  if (anthropic) {
+    try {
+      const message = await anthropic.messages.create({
+        model: CLAUDE_MODEL,
+        max_tokens: maxTokens,
+        ...(systemPrompt ? { system: systemPrompt } : {}),
+        messages: [{ role: "user", content: prompt }],
+      });
+      const block = message.content[0];
+      if (block.type === "text" && block.text) return block.text;
+    } catch (err) {
+      console.warn("[AI] Anthropic failed, trying Mistral fallback:", (err as Error).message);
+    }
+  } else {
+    console.info("[AI] No Anthropic API key, trying Mistral fallback");
+  }
+
+  // Fallback to Mistral API (free tier: ~2 req/min, all models accessible)
+  if (mistral) {
+    try {
+      const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [];
+      if (systemPrompt) {
+        messages.push({ role: "system", content: systemPrompt });
+      }
+      messages.push({ role: "user", content: prompt });
+
+      const response = await mistral.chat.complete({
+        model: MISTRAL_MODEL,
+        maxTokens,
+        temperature: 0.7,
+        messages,
+        // Use JSON mode for structured output (exam gen, grading, quest chains)
+        ...(jsonMode ? { responseFormat: { type: "json_object" as const } } : {}),
+      });
+
+      const content = response.choices?.[0]?.message?.content;
+      if (typeof content === "string" && content) return content;
+    } catch (err) {
+      console.warn("[AI] Mistral also failed:", (err as Error).message);
+    }
+  } else {
+    console.info("[AI] No Mistral API key either, AI features unavailable");
+  }
+
+  // If both fail, return empty string (callers handle this gracefully)
+  return "";
+}
 
 // --- Morning Briefing ---
 interface BriefingContext {
@@ -35,14 +102,7 @@ Rules:
 - If streak = 0: warn about consequences
 - End with exactly ONE command sentence starting with an imperative verb`;
 
-  const message = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 200,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const block = message.content[0];
-  return block.type === "text" ? block.text : "";
+  return aiCall(prompt, undefined, 200);
 }
 
 // --- Exam Generation ---
@@ -81,14 +141,7 @@ Required JSON structure:
   }]
 }`;
 
-  const message = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 4000,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const block = message.content[0];
-  return block.type === "text" ? block.text : "";
+  return aiCall(prompt, undefined, 4000, true);
 }
 
 // --- Exam Grading ---
@@ -118,14 +171,7 @@ Required JSON:
 
 Be rigorous. Vague answers do not earn full marks.`;
 
-  const message = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 500,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const block = message.content[0];
-  return block.type === "text" ? block.text : "";
+  return aiCall(prompt, undefined, 500, true);
 }
 
 // --- AI Mentor Chat (Step 10) ---
@@ -159,15 +205,7 @@ Guidelines:
 - Suggest specific quests or dungeons when appropriate
 - If a stat is lagging, suggest ways to improve it`;
 
-  const message = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 400,
-    system: systemPrompt,
-    messages: [{ role: "user", content: ctx.userMessage }],
-  });
-
-  const block = message.content[0];
-  return block.type === "text" ? block.text : "";
+  return aiCall(ctx.userMessage, systemPrompt, 400);
 }
 
 // --- Quest Chain Generation ---
@@ -201,14 +239,7 @@ Generate 5-7 quests. Each quest:
 Scale difficulty to level ${ctx.level}. If goal is career-related, bias toward
 jobs. Never use vague titles.`;
 
-  const message = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 2000,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const block = message.content[0];
-  return block.type === "text" ? block.text : "";
+  return aiCall(prompt, undefined, 2000, true);
 }
 
 // --- Weekly Report ---
@@ -241,12 +272,5 @@ Streak: ${ctx.streak} | Gold: ${ctx.weeklyGold} | Exams passed: ${ctx.examsPasse
 
 End with one forward-looking directive for next week.`;
 
-  const message = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 300,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const block = message.content[0];
-  return block.type === "text" ? block.text : "";
+  return aiCall(prompt, undefined, 300);
 }

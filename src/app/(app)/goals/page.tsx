@@ -74,7 +74,7 @@ export default function GoalsPage() {
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-8 bg-sq-border/30 rounded w-48" />
+        <div className="h-8 bg-sq-hover rounded w-48" />
         {[1, 2, 3].map((i) => <div key={i} className="sq-panel p-6 h-24" />)}
       </div>
     );
@@ -86,7 +86,7 @@ export default function GoalsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display font-bold text-2xl text-sq-gold">GOALS</h1>
+        <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">Goals</h1>
         <button onClick={() => setShowForm(!showForm)} className="sq-button-gold text-sm flex items-center gap-1">
           <Plus className="w-4 h-4" /> New Goal
         </button>
@@ -102,7 +102,7 @@ export default function GoalsPage() {
             className="sq-panel p-4 space-y-3"
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-sm text-sq-gold">Set New Goal</h3>
+              <h3 className="font-bold text-sm text-sq-gold">Set New Goal</h3>
               <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-sq-muted" /></button>
             </div>
             <div className="flex gap-2">
@@ -110,7 +110,7 @@ export default function GoalsPage() {
                 <button
                   key={key}
                   onClick={() => setFormType(key)}
-                  className={`px-3 py-1 rounded text-xs font-display font-bold border transition-all ${
+                  className={`px-3 py-1 rounded text-xs font-bold border transition-all ${
                     formType === key ? `${cfg.border} ${cfg.color} bg-sq-bg` : "border-sq-border text-sq-muted"
                   }`}
                 >
@@ -144,7 +144,7 @@ export default function GoalsPage() {
       {/* Active Goals */}
       {activeGoals.length > 0 && (
         <div className="space-y-3">
-          <h2 className="font-display font-semibold text-sm text-sq-text">ACTIVE GOALS</h2>
+          <h2 className="font-semibold text-sm text-sq-text">ACTIVE GOALS</h2>
           {activeGoals.map((goal) => {
             const cfg = typeConfig[goal.type] || typeConfig.sprint;
             return (
@@ -152,16 +152,16 @@ export default function GoalsPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className={`font-mono text-[10px] font-bold ${cfg.color}`}>{cfg.label}</span>
+                      <span className={`text-[10px] font-bold ${cfg.color}`}>{cfg.label}</span>
                       <Target className={`w-3 h-3 ${cfg.color}`} />
                     </div>
-                    <h3 className="font-display font-bold text-sm text-sq-text mt-1">{goal.title}</h3>
-                    {goal.description && <p className="font-mono text-[11px] text-sq-muted mt-1">{goal.description}</p>}
+                    <h3 className="font-bold text-sm text-sq-text mt-1">{goal.title}</h3>
+                    {goal.description && <p className="text-[11px] text-sq-muted mt-1">{goal.description}</p>}
                     <div className="flex items-center gap-3 mt-2">
-                      <span className="font-mono text-[10px] text-sq-gold">+{goal.xpReward} XP</span>
-                      <span className="font-mono text-[10px] text-sq-gold">+{goal.goldReward} G</span>
+                      <span className="text-[10px] text-sq-gold">+{goal.xpReward} XP</span>
+                      <span className="text-[10px] text-sq-gold">+{goal.goldReward} G</span>
                       {goal.targetDate && (
-                        <span className="font-mono text-[10px] text-sq-muted">
+                        <span className="text-[10px] text-sq-muted">
                           Due: {new Date(goal.targetDate).toLocaleDateString()}
                         </span>
                       )}
@@ -191,12 +191,12 @@ export default function GoalsPage() {
       {/* Completed Goals */}
       {completedGoals.length > 0 && (
         <div className="space-y-3">
-          <h2 className="font-display font-semibold text-sm text-sq-muted">COMPLETED</h2>
+          <h2 className="font-semibold text-sm text-sq-muted">COMPLETED</h2>
           {completedGoals.map((goal) => (
             <div key={goal.id} className="sq-panel p-3 opacity-50">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-sq-green" />
-                <span className="font-display text-sm text-sq-muted line-through">{goal.title}</span>
+                <span className="text-sm text-sq-muted line-through">{goal.title}</span>
               </div>
             </div>
           ))}
@@ -206,7 +206,7 @@ export default function GoalsPage() {
       {activeGoals.length === 0 && completedGoals.length === 0 && (
         <div className="sq-panel p-8 text-center">
           <Target className="w-8 h-8 text-sq-muted mx-auto mb-2" />
-          <p className="font-mono text-sm text-sq-muted">No goals set. Create a Sprint, Monthly, or Life Quest goal.</p>
+          <p className="text-sm text-sq-muted">No goals set. Create a Sprint, Monthly, or Life Quest goal.</p>
         </div>
       )}
     </div>

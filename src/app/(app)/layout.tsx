@@ -8,13 +8,13 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-sq-bg">
+    <div className="min-h-screen bg-sq-bg flex">
       <BottomNav />
       <MorningBriefing />
       {/* Main content area — offset for sidebar on desktop, bottom nav on mobile */}
-      <div className="md:ml-56">
-        <div className="p-4 pb-20 md:pb-4 max-w-4xl mx-auto space-y-4">
-          <TopBar />
+      <div className="flex-1 md:ml-[260px] min-h-screen transition-[margin] duration-300">
+        <TopBar />
+        <div className="px-6 py-8 pb-24 md:pb-8 max-w-[900px] mx-auto">
           <main>{children}</main>
         </div>
       </div>

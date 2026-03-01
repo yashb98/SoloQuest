@@ -22,7 +22,7 @@ const rarityColors: Record<string, string> = {
   Common: "border-gray-500/50 text-gray-400",
   Rare: "border-sq-blue/50 text-sq-blue",
   Epic: "border-sq-purple/50 text-sq-purple",
-  Legendary: "border-sq-gold/50 text-sq-gold shadow-sq-gold-glow",
+  Legendary: "border-sq-gold/50 text-sq-gold shadow-sq-accent-glow",
   Mythic: "border-red-500/50 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.3)]",
 };
 
@@ -55,7 +55,7 @@ export default function AchievementsPage() {
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-8 bg-sq-border/30 rounded w-48" />
+        <div className="h-8 bg-sq-hover rounded-xl w-48" />
         {[1, 2, 3, 4].map((i) => <div key={i} className="sq-panel p-6 h-24" />)}
       </div>
     );
@@ -64,8 +64,8 @@ export default function AchievementsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display font-bold text-2xl text-sq-gold">ACHIEVEMENTS</h1>
-        <span className="font-mono text-sm text-sq-muted">
+        <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">Achievements</h1>
+        <span className="text-sm text-sq-muted">
           {unlocked}/{achievements.length} unlocked
         </span>
       </div>
@@ -76,10 +76,10 @@ export default function AchievementsPage() {
           <button
             key={cat}
             onClick={() => setFilter(cat)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-md font-display font-semibold text-xs transition-all
+            className={`flex-shrink-0 px-3 py-1.5 rounded-md font-semibold text-xs transition-all
               ${filter === cat
-                ? "bg-sq-gold/20 text-sq-gold border border-sq-gold/40"
-                : "bg-sq-bg text-sq-muted border border-sq-border hover:text-sq-text"
+                ? "bg-[#FFF3ED] text-sq-accent border-2 border-sq-accent"
+                : "bg-white text-sq-subtle border-[1.5px] border-[#DDD6CE] hover:border-sq-accent/40"
               }`}
           >
             {cat === "all" ? "All" : categoryLabels[cat] || cat}
@@ -111,31 +111,31 @@ export default function AchievementsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-display font-bold text-sm text-sq-text">
+                  <h3 className="font-bold text-sm text-sq-text">
                     {achievement.name}
                   </h3>
-                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${
+                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
                     rarityColors[achievement.rarity]?.split(" ").pop() || "text-sq-muted"
                   } bg-sq-bg border ${rarityColors[achievement.rarity]?.split(" ")[0] || "border-sq-border"}`}>
                     {achievement.rarity.toUpperCase()}
                   </span>
                 </div>
-                <p className="font-mono text-[11px] text-sq-muted mt-1">{achievement.description}</p>
+                <p className="text-[11px] text-sq-muted mt-1">{achievement.description}</p>
                 <div className="flex items-center gap-3 mt-2">
                   {achievement.xpReward > 0 && (
-                    <span className="font-mono text-[10px] text-sq-gold">+{achievement.xpReward} XP</span>
+                    <span className="text-[10px] text-sq-gold">+{achievement.xpReward} XP</span>
                   )}
                   {achievement.goldReward > 0 && (
-                    <span className="font-mono text-[10px] text-sq-gold">+{achievement.goldReward} G</span>
+                    <span className="text-[10px] text-sq-gold">+{achievement.goldReward} G</span>
                   )}
                   {achievement.titleReward && (
-                    <span className="font-mono text-[10px] text-sq-purple flex items-center gap-1">
+                    <span className="text-[10px] text-sq-purple flex items-center gap-1">
                       <Star className="w-3 h-3" /> {achievement.titleReward}
                     </span>
                   )}
                 </div>
                 {achievement.isUnlocked && achievement.unlockedAt && (
-                  <p className="font-mono text-[9px] text-sq-green mt-1">
+                  <p className="text-[9px] text-sq-green mt-1">
                     Unlocked {new Date(achievement.unlockedAt).toLocaleDateString()}
                   </p>
                 )}

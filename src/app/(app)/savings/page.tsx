@@ -91,7 +91,7 @@ export default function SavingsPage() {
   if (!data) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-8 bg-sq-border/30 rounded w-48" />
+        <div className="h-8 bg-sq-hover rounded w-48" />
         <div className="grid gap-4 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="sq-panel p-6 h-32" />
@@ -106,10 +106,10 @@ export default function SavingsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display font-bold text-2xl text-sq-gold">
-          SAVINGS VAULT
+        <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">
+          Savings Vault
         </h1>
-        <span className="font-mono text-sm text-sq-muted">
+        <span className="text-sm text-sq-muted">
           Total: £{totalSaved.toFixed(2)}
         </span>
       </div>
@@ -120,11 +120,11 @@ export default function SavingsPage() {
           <div key={pot.key} className="sq-panel p-4 space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-lg">{pot.icon}</span>
-              <span className="font-display font-semibold text-sm text-sq-text">
+              <span className="font-semibold text-sm text-sq-text">
                 {pot.label}
               </span>
             </div>
-            <p className={`font-mono text-2xl font-bold ${pot.color}`}>
+            <p className={`text-2xl font-bold ${pot.color}`}>
               £{(data.pots[pot.key] || 0).toFixed(2)}
             </p>
           </div>
@@ -152,7 +152,7 @@ export default function SavingsPage() {
       {/* Add Savings Form */}
       {showAddSavings && (
         <div className="sq-panel p-4 space-y-3">
-          <h3 className="font-display font-semibold text-sm text-sq-gold">
+          <h3 className="font-semibold text-sm text-sq-gold">
             Deposit to Savings
           </h3>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -193,7 +193,7 @@ export default function SavingsPage() {
       {/* Add Spend Form */}
       {showAddSpend && (
         <div className="sq-panel p-4 space-y-3">
-          <h3 className="font-display font-semibold text-sm text-sq-blue">
+          <h3 className="font-semibold text-sm text-sq-blue">
             Log Spending
           </h3>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -234,11 +234,11 @@ export default function SavingsPage() {
       {/* Monthly Spending Summary */}
       <div className="sq-panel p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-display font-semibold text-sm text-sq-text flex items-center gap-2">
+          <h3 className="font-semibold text-sm text-sq-text flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-sq-blue" />
             This Month
           </h3>
-          <span className="font-mono text-sm text-sq-muted">
+          <span className="text-sm text-sq-muted">
             £{data.monthlyTotal.toFixed(2)}
           </span>
         </div>
@@ -251,17 +251,17 @@ export default function SavingsPage() {
                   key={cat}
                   className="flex items-center justify-between text-sm"
                 >
-                  <span className="font-mono text-sq-muted capitalize">
+                  <span className="text-sq-muted capitalize">
                     {cat}
                   </span>
-                  <span className="font-mono text-sq-text">
+                  <span className="text-sq-text">
                     £{amount.toFixed(2)}
                   </span>
                 </div>
               ))}
           </div>
         ) : (
-          <p className="text-sq-muted font-mono text-xs">
+          <p className="text-sq-muted text-xs">
             No spending logged this month.
           </p>
         )}
@@ -270,7 +270,7 @@ export default function SavingsPage() {
       {/* Recent Transactions */}
       {data.recentSpending.length > 0 && (
         <div className="sq-panel p-4 space-y-3">
-          <h3 className="font-display font-semibold text-sm text-sq-text">
+          <h3 className="font-semibold text-sm text-sq-text">
             Recent Spending
           </h3>
           <div className="space-y-2">
@@ -280,14 +280,14 @@ export default function SavingsPage() {
                 className="flex items-center justify-between text-xs border-b border-sq-border/30 pb-2"
               >
                 <div>
-                  <span className="font-mono text-sq-text">
+                  <span className="text-sq-text">
                     {spend.description}
                   </span>
-                  <span className="ml-2 font-mono text-sq-muted capitalize">
+                  <span className="ml-2 text-sq-muted capitalize">
                     ({spend.category})
                   </span>
                 </div>
-                <span className="font-mono text-sq-text">
+                <span className="text-sq-text">
                   £{spend.amount.toFixed(2)}
                 </span>
               </div>

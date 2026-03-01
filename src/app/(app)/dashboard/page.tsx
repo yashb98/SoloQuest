@@ -56,14 +56,12 @@ export default function DashboardPage() {
       const data = await res.json();
 
       if (data.success) {
-        // Update quest in local state
         setQuests((prev) =>
           prev.map((q) =>
             q.id === questId ? { ...q, isCompleted: true } : q
           )
         );
 
-        // Show level-up modal if applicable
         if (data.didLevelUp || data.isGateLocked) {
           setLevelUpData({
             newLevel: data.newLevel,
@@ -83,14 +81,40 @@ export default function DashboardPage() {
     }
   };
 
+  const handleUndoQuest = async (questId: number) => {
+    setLoadingQuestId(questId);
+
+    try {
+      const res = await fetch("/api/quests/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questId, undo: true }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.undone) {
+        setQuests((prev) =>
+          prev.map((q) =>
+            q.id === questId ? { ...q, isCompleted: false } : q
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Failed to undo quest:", error);
+    } finally {
+      setLoadingQuestId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
         <div className="sq-panel p-6 animate-pulse">
-          <div className="h-6 bg-sq-border/30 rounded w-48 mb-4" />
+          <div className="h-6 bg-sq-hover rounded-xl w-48 mb-4" />
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-20 bg-sq-border/20 rounded" />
+              <div key={i} className="h-20 bg-sq-hover rounded-xl" />
             ))}
           </div>
         </div>
@@ -103,6 +127,7 @@ export default function DashboardPage() {
       <QuestBoard
         quests={quests}
         onComplete={handleCompleteQuest}
+        onUndo={handleUndoQuest}
         loadingQuestId={loadingQuestId}
       />
 

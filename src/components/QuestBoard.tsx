@@ -19,6 +19,7 @@ interface Quest {
 interface QuestBoardProps {
   quests: Quest[];
   onComplete: (questId: number) => void;
+  onUndo: (questId: number) => void;
   loadingQuestId: number | null;
 }
 
@@ -41,7 +42,18 @@ const TIERS = [
   { key: "custom", label: "Custom" },
 ] as const;
 
-export default function QuestBoard({ quests, onComplete, loadingQuestId }: QuestBoardProps) {
+const categoryColors: Record<string, { bg: string; text: string; dot: string }> = {
+  health: { bg: "bg-[#DCFCE7]", text: "text-[#166534]", dot: "border-[#22C55E]" },
+  learning: { bg: "bg-[#DBEAFE]", text: "text-[#1E40AF]", dot: "border-[#3B82F6]" },
+  jobs: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", dot: "border-[#F59E0B]" },
+  finance: { bg: "bg-[#E0E7FF]", text: "text-[#3730A3]", dot: "border-[#6366F1]" },
+  focus: { bg: "bg-[#FCE7F3]", text: "text-[#9D174D]", dot: "border-[#EC4899]" },
+  food: { bg: "bg-[#FFEDD5]", text: "text-[#9A3412]", dot: "border-[#F97316]" },
+  mental: { bg: "bg-[#F3E8FF]", text: "text-[#6B21A8]", dot: "border-[#A855F7]" },
+  agentiq: { bg: "bg-[#DBEAFE]", text: "text-[#1E40AF]", dot: "border-[#3B82F6]" },
+};
+
+export default function QuestBoard({ quests, onComplete, onUndo, loadingQuestId }: QuestBoardProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeTier, setActiveTier] = useState("all");
 
@@ -55,63 +67,74 @@ export default function QuestBoard({ quests, onComplete, loadingQuestId }: Quest
   const completedCount = quests.filter((q) => q.isCompleted).length;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display font-bold text-xl text-sq-gold">QUEST BOARD</h2>
-        <span className="font-mono text-sm text-sq-muted">{completedCount}/{quests.length} complete</span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-baseline justify-between flex-wrap gap-2">
+        <h2 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">
+          Quest Board
+        </h2>
+        <span className="text-[17px] text-sq-muted font-medium">
+          {completedCount}/{quests.length} complete
+        </span>
       </div>
 
-      {/* Tier tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      {/* Tier filters */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide flex-wrap">
         {TIERS.map((tier) => {
           const count = tier.key === "all" ? quests.length : quests.filter((q) => q.tier === tier.key).length;
           if (count === 0 && tier.key !== "all") return null;
+          const isActive = activeTier === tier.key;
           return (
             <button
               key={tier.key}
               onClick={() => setActiveTier(tier.key)}
-              className={`flex-shrink-0 px-3 py-1 rounded-md font-display font-semibold text-xs transition-all ${
-                activeTier === tier.key
-                  ? "bg-sq-blue/20 text-sq-blue border border-sq-blue/40"
-                  : "bg-sq-bg text-sq-muted border border-sq-border hover:text-sq-text"
-              }`}
+              className={`flex-shrink-0 px-[18px] py-2 rounded-full font-semibold text-[15px] transition-all whitespace-nowrap
+                ${isActive
+                  ? "border-2 border-sq-accent bg-[#FFF3ED] text-sq-accent"
+                  : "border-[1.5px] border-[#DDD6CE] bg-white text-sq-subtle hover:border-sq-accent/40"
+                }`}
             >
-              {tier.label} <span className="ml-1 opacity-60">{count}</span>
+              {tier.label}{" "}
+              <span className="opacity-70 font-medium text-[13px]">{count}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Category tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      {/* Category filters */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-wrap">
         {CATEGORIES.map((cat) => {
           const count = cat.key === "all" ? quests.length : quests.filter((q) => q.category === cat.key).length;
           if (count === 0 && cat.key !== "all") return null;
+          const isActive = activeCategory === cat.key;
+          const color = cat.key === "all" ? null : categoryColors[cat.key];
           return (
             <button
               key={cat.key}
               onClick={() => setActiveCategory(cat.key)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-md font-display font-semibold text-xs transition-all ${
-                activeCategory === cat.key
-                  ? "bg-sq-gold/20 text-sq-gold border border-sq-gold/40"
-                  : "bg-sq-bg text-sq-muted border border-sq-border hover:text-sq-text"
-              }`}
+              className={`flex-shrink-0 px-[18px] py-2 rounded-full font-semibold text-[15px] transition-all whitespace-nowrap
+                ${isActive
+                  ? `border-2 ${color ? color.dot : "border-sq-accent"} ${color ? color.bg : "bg-[#FFF3ED]"} ${color ? color.text : "text-sq-accent"}`
+                  : "border-[1.5px] border-[#DDD6CE] bg-white text-sq-subtle hover:border-sq-accent/40"
+                }`}
             >
-              {cat.label} <span className="ml-1 opacity-60">{count}</span>
+              {cat.label}{" "}
+              <span className="opacity-70 font-medium text-[13px]">{count}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="space-y-3">
+      {/* Quest List */}
+      <div className="flex flex-col gap-3">
         <AnimatePresence mode="popLayout">
           {filteredQuests.map((quest) => (
-            <QuestCard key={quest.id} quest={quest} onComplete={onComplete} isLoading={loadingQuestId === quest.id} />
+            <QuestCard key={quest.id} quest={quest} onComplete={onComplete} onUndo={onUndo} isLoading={loadingQuestId === quest.id} />
           ))}
         </AnimatePresence>
         {filteredQuests.length === 0 && (
-          <div className="sq-panel p-8 text-center">
-            <p className="text-sq-muted font-mono text-sm">No quests in this category.</p>
+          <div className="text-center py-[60px] text-sq-muted text-[18px]">
+            No quests found for this filter combination.
           </div>
         )}
       </div>

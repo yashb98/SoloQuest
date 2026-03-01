@@ -1,58 +1,81 @@
-@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --sq-bg: #0A0E1A;
-  --sq-panel: #111827;
-  --sq-border: #1E3A5F;
-  --sq-gold: #E2B04A;
-  --sq-blue: #3B82F6;
-  --sq-text: #E2E8F0;
-  --sq-muted: #94A3B8;
+  --sq-bg: #FAF9F6;
+  --sq-panel: #FFFFFF;
+  --sq-border: #E8E4DE;
+  --sq-accent: #C4653A;
+  --sq-accent-light: #E08A5E;
+  --sq-text: #1A1A1A;
+  --sq-muted: #9C8E82;
+  --sq-subtle: #6B5F56;
 }
 
 * {
+  box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: var(--sq-border) var(--sq-bg);
+  scrollbar-color: #DDD6CE transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #DDD6CE;
+  border-radius: 3px;
 }
 
 body {
   color: var(--sq-text);
   background: var(--sq-bg);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Panel base style */
+button:hover {
+  filter: brightness(0.97);
+}
+
 @layer components {
   .sq-panel {
-    @apply bg-sq-panel border border-sq-border rounded-lg shadow-sq-glow;
+    @apply bg-sq-panel border border-sq-border rounded-2xl shadow-sq-card;
   }
 
+  .sq-button-accent {
+    @apply bg-gradient-to-r from-sq-accent to-sq-accent-light text-white font-semibold px-5 py-2.5 rounded-xl
+           hover:shadow-sq-accent-glow transition-all duration-200;
+  }
+
+  /* Alias for pages that still use sq-button-gold */
   .sq-button-gold {
-    @apply bg-sq-gold text-sq-bg font-display font-bold px-4 py-2 rounded-md
-           hover:shadow-sq-gold-glow transition-all duration-200;
+    @apply bg-gradient-to-r from-sq-accent to-sq-accent-light text-white font-semibold px-5 py-2.5 rounded-xl
+           hover:shadow-sq-accent-glow transition-all duration-200;
   }
 
   .sq-button-blue {
-    @apply bg-sq-blue text-white font-display font-bold px-4 py-2 rounded-md
-           hover:opacity-90 transition-all duration-200;
+    @apply bg-gradient-to-r from-sq-blue to-blue-400 text-white font-semibold px-5 py-2.5 rounded-xl
+           hover:shadow-[0_2px_8px_rgba(59,130,246,0.3)] transition-all duration-200;
   }
 
-  /* Difficulty badges */
-  .quest-normal {
-    @apply text-sq-green border-sq-green;
+  .sq-button-outline {
+    @apply bg-white text-sq-subtle font-semibold px-5 py-2.5 rounded-xl border-[1.5px] border-sq-border
+           hover:border-sq-accent hover:text-sq-accent transition-all duration-200;
   }
 
-  .quest-hard {
-    @apply text-sq-blue border-sq-blue;
+  .sq-input {
+    @apply w-full bg-white border border-sq-border rounded-xl px-4 py-2.5 text-[15px] text-sq-text
+           focus:border-sq-accent/50 focus:outline-none focus:ring-2 focus:ring-sq-accent/10 transition-all;
   }
 
-  .quest-legendary {
-    @apply text-sq-purple border-sq-purple shadow-sq-purple-glow;
+  .sq-badge {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-semibold;
   }
 }

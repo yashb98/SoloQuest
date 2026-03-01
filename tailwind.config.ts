@@ -9,37 +9,38 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        "sq-bg": "#0A0E1A",
-        "sq-panel": "#111827",
-        "sq-border": "#1E3A5F",
-        "sq-gold": "#E2B04A",
+        "sq-bg": "#FAF9F6",
+        "sq-panel": "#FFFFFF",
+        "sq-border": "#E8E4DE",
+        "sq-accent": "#C4653A",
+        "sq-accent-light": "#E08A5E",
+        "sq-gold": "#D4A017",
         "sq-blue": "#3B82F6",
-        "sq-text": "#E2E8F0",
-        "sq-muted": "#94A3B8",
+        "sq-text": "#1A1A1A",
+        "sq-muted": "#9C8E82",
+        "sq-subtle": "#6B5F56",
         "sq-green": "#22C55E",
         "sq-purple": "#A855F7",
+        "sq-hover": "#F0EBE5",
+        "sq-warm": "#FFF8F0",
+        "sq-warm-border": "#F0E0D0",
       },
       fontFamily: {
-        display: ["Rajdhani", "sans-serif"],
-        mono: ["IBM Plex Mono", "monospace"],
+        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
       },
       boxShadow: {
-        "sq-glow": "inset 0 0 20px rgba(30, 58, 95, 0.3)",
-        "sq-gold-glow": "0 0 15px rgba(226, 176, 74, 0.4)",
-        "sq-purple-glow": "0 0 20px rgba(168, 85, 247, 0.5)",
+        "sq-card": "0 1px 3px rgba(0,0,0,0.04)",
+        "sq-card-hover": "0 4px 12px rgba(0,0,0,0.06)",
+        "sq-accent-glow": "0 2px 8px rgba(196,101,58,0.3)",
+        "sq-sidebar": "4px 0 24px rgba(0,0,0,0.08)",
       },
       animation: {
-        "pulse-gold": "pulse-gold 2s ease-in-out infinite",
-        "glow-border": "glow-border 3s ease-in-out infinite",
+        "pulse-accent": "pulse-accent 2s ease-in-out infinite",
       },
       keyframes: {
-        "pulse-gold": {
-          "0%, 100%": { boxShadow: "0 0 5px rgba(226, 176, 74, 0.3)" },
-          "50%": { boxShadow: "0 0 20px rgba(226, 176, 74, 0.6)" },
-        },
-        "glow-border": {
-          "0%, 100%": { borderColor: "rgba(30, 58, 95, 0.5)" },
-          "50%": { borderColor: "rgba(30, 58, 95, 1)" },
+        "pulse-accent": {
+          "0%, 100%": { boxShadow: "0 0 5px rgba(196,101,58,0.2)" },
+          "50%": { boxShadow: "0 0 15px rgba(196,101,58,0.4)" },
         },
       },
     },

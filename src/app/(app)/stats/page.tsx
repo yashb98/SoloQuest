@@ -36,7 +36,7 @@ export default function StatsPage() {
   if (!hunter) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-8 bg-sq-border/30 rounded w-48" />
+        <div className="h-8 bg-sq-hover rounded-xl w-48" />
         <div className="sq-panel p-6 h-64" />
       </div>
     );
@@ -57,78 +57,78 @@ export default function StatsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display font-bold text-2xl text-sq-gold">HUNTER ANALYTICS</h1>
+      <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">Hunter Analytics</h1>
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="sq-panel p-3 text-center">
-          <Trophy className="w-5 h-5 text-sq-gold mx-auto mb-1" />
-          <p className="font-mono text-lg font-bold text-sq-gold">{hunter.rank}-{hunter.level}</p>
-          <p className="font-mono text-[10px] text-sq-muted">RANK</p>
+        <div className="sq-panel p-4 text-center">
+          <Trophy className="w-5 h-5 text-sq-accent mx-auto mb-1" />
+          <p className="text-lg font-bold text-sq-accent">{hunter.rank}-{hunter.level}</p>
+          <p className="text-[10px] text-sq-muted font-medium uppercase">Rank</p>
         </div>
-        <div className="sq-panel p-3 text-center">
+        <div className="sq-panel p-4 text-center">
           <Target className="w-5 h-5 text-sq-blue mx-auto mb-1" />
-          <p className="font-mono text-lg font-bold text-sq-blue">{totalStats}</p>
-          <p className="font-mono text-[10px] text-sq-muted">TOTAL STATS</p>
+          <p className="text-lg font-bold text-sq-blue">{totalStats}</p>
+          <p className="text-[10px] text-sq-muted font-medium uppercase">Total Stats</p>
         </div>
-        <div className="sq-panel p-3 text-center">
+        <div className="sq-panel p-4 text-center">
           <Flame className="w-5 h-5 text-orange-500 mx-auto mb-1" />
-          <p className="font-mono text-lg font-bold text-orange-400">{hunter.streak}</p>
-          <p className="font-mono text-[10px] text-sq-muted">STREAK</p>
+          <p className="text-lg font-bold text-orange-500">{hunter.streak}</p>
+          <p className="text-[10px] text-sq-muted font-medium uppercase">Streak</p>
         </div>
-        <div className="sq-panel p-3 text-center">
+        <div className="sq-panel p-4 text-center">
           <Coins className="w-5 h-5 text-sq-gold mx-auto mb-1" />
-          <p className="font-mono text-lg font-bold text-sq-gold">{hunter.gold.toLocaleString()}</p>
-          <p className="font-mono text-[10px] text-sq-muted">GOLD</p>
+          <p className="text-lg font-bold text-sq-gold">{hunter.gold.toLocaleString()}</p>
+          <p className="text-[10px] text-sq-muted font-medium uppercase">Gold</p>
         </div>
       </div>
 
       {/* Radar Chart */}
-      <div className="sq-panel p-4">
-        <h2 className="font-display font-semibold text-sm text-sq-text mb-4">STAT DISTRIBUTION</h2>
+      <div className="sq-panel p-5">
+        <h2 className="font-semibold text-sm text-sq-text mb-4">Stat Distribution</h2>
         <div className="w-full h-72">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={radarData}>
-              <PolarGrid stroke="#1E3A5F" />
-              <PolarAngleAxis dataKey="stat" tick={{ fill: "#94A3B8", fontSize: 11, fontFamily: "monospace" }} />
-              <PolarRadiusAxis angle={90} domain={[0, Math.max(20, ...radarData.map((d) => d.value))]} tick={{ fill: "#94A3B8", fontSize: 9 }} />
-              <Radar name="Stats" dataKey="value" stroke="#E2B04A" fill="#E2B04A" fillOpacity={0.3} strokeWidth={2} />
+              <PolarGrid stroke="#E8E4DE" />
+              <PolarAngleAxis dataKey="stat" tick={{ fill: "#9C8E82", fontSize: 11 }} />
+              <PolarRadiusAxis angle={90} domain={[0, Math.max(20, ...radarData.map((d) => d.value))]} tick={{ fill: "#9C8E82", fontSize: 9 }} />
+              <Radar name="Stats" dataKey="value" stroke="#C4653A" fill="#C4653A" fillOpacity={0.2} strokeWidth={2} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Stat breakdown */}
-      <div className="sq-panel p-4 space-y-3">
-        <h2 className="font-display font-semibold text-sm text-sq-text">STAT DETAILS</h2>
+      <div className="sq-panel p-5 space-y-3">
+        <h2 className="font-semibold text-sm text-sq-text">Stat Details</h2>
         {radarData.map((stat) => (
           <div key={stat.stat} className="flex items-center gap-3">
-            <span className="font-mono text-xs text-sq-muted w-20">{stat.stat}</span>
-            <div className="flex-1 h-2 bg-sq-bg rounded-full overflow-hidden">
+            <span className="text-xs text-sq-muted w-20">{stat.stat}</span>
+            <div className="flex-1 h-2 bg-sq-hover rounded-full overflow-hidden">
               <div
-                className="h-full bg-sq-gold rounded-full transition-all"
+                className="h-full bg-gradient-to-r from-sq-accent to-sq-accent-light rounded-full transition-all"
                 style={{ width: `${Math.min((stat.value / Math.max(20, ...radarData.map((d) => d.value))) * 100, 100)}%` }}
               />
             </div>
-            <span className="font-mono text-xs text-sq-gold w-8 text-right">{stat.value}</span>
+            <span className="text-xs text-sq-accent w-8 text-right font-semibold">{stat.value}</span>
           </div>
         ))}
       </div>
 
       {/* Insights */}
-      <div className="sq-panel p-4 space-y-2">
-        <h2 className="font-display font-semibold text-sm text-sq-text">SYSTEM ANALYSIS</h2>
-        <p className="font-mono text-xs text-sq-muted">
-          Strongest: <span className="text-sq-green">{strongestStat.stat}</span> ({strongestStat.value} pts)
+      <div className="sq-panel p-5 space-y-2">
+        <h2 className="font-semibold text-sm text-sq-text">System Analysis</h2>
+        <p className="text-xs text-sq-muted">
+          Strongest: <span className="text-sq-green font-medium">{strongestStat.stat}</span> ({strongestStat.value} pts)
         </p>
-        <p className="font-mono text-xs text-sq-muted">
-          Weakest: <span className="text-red-400">{weakestStat.stat}</span> ({weakestStat.value} pts)
+        <p className="text-xs text-sq-muted">
+          Weakest: <span className="text-red-500 font-medium">{weakestStat.stat}</span> ({weakestStat.value} pts)
         </p>
-        <p className="font-mono text-xs text-sq-muted">
-          Best streak: <span className="text-orange-400">{hunter.bestStreak} days</span>
+        <p className="text-xs text-sq-muted">
+          Best streak: <span className="text-orange-500 font-medium">{hunter.bestStreak} days</span>
         </p>
-        <p className="font-mono text-xs text-sq-muted">
-          XP Progress: <span className="text-sq-gold">{hunter.xp.toLocaleString()} / {hunter.xpToNext.toLocaleString()}</span>{" "}
+        <p className="text-xs text-sq-muted">
+          XP Progress: <span className="text-sq-accent font-medium">{hunter.xp.toLocaleString()} / {hunter.xpToNext.toLocaleString()}</span>{" "}
           ({Math.round((hunter.xp / hunter.xpToNext) * 100)}%)
         </p>
       </div>

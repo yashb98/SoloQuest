@@ -11,7 +11,6 @@ export default function MorningBriefing() {
   const [isDismissed, setIsDismissed] = useState(false);
 
   const fetchBriefing = useCallback(async () => {
-    // Check if already dismissed today
     const today = new Date().toISOString().split("T")[0];
     const dismissedDate = localStorage.getItem("sq-briefing-dismissed");
     if (dismissedDate === today) {
@@ -27,7 +26,7 @@ export default function MorningBriefing() {
         setIsOpen(true);
       }
     } catch {
-      // Silently fail — briefing is non-critical
+      // Silently fail
     }
   }, []);
 
@@ -71,14 +70,14 @@ export default function MorningBriefing() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", damping: 20 }}
-            className="relative max-w-lg mx-4 p-8 sq-panel border-2 border-sq-gold/50"
+            className="relative max-w-lg mx-4 p-8 bg-white rounded-2xl border border-sq-accent/30 shadow-sq-accent-glow"
           >
             <button
               onClick={handleDismiss}
@@ -87,29 +86,26 @@ export default function MorningBriefing() {
               <X className="w-5 h-5" />
             </button>
 
-            {/* System header */}
             <div className="flex items-center gap-2 mb-4">
-              <Volume2 className="w-4 h-4 text-sq-gold animate-pulse" />
-              <span className="font-display font-bold text-xs text-sq-gold uppercase tracking-widest">
+              <Volume2 className="w-4 h-4 text-sq-accent animate-pulse" />
+              <span className="font-bold text-xs text-sq-accent uppercase tracking-widest">
                 System Briefing
               </span>
             </div>
 
-            {/* Typewriter text */}
-            <div className="font-mono text-sm text-sq-text leading-relaxed min-h-[120px]">
+            <div className="text-sm text-sq-text leading-relaxed min-h-[120px]">
               {displayedText}
               {displayedText.length < (briefing?.length ?? 0) && (
-                <span className="inline-block w-2 h-4 bg-sq-gold ml-0.5 animate-pulse" />
+                <span className="inline-block w-2 h-4 bg-sq-accent ml-0.5 animate-pulse" />
               )}
             </div>
 
-            {/* Dismiss button (appears after typewriter finishes) */}
             {displayedText.length >= (briefing?.length ?? 0) && (
               <motion.button
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 onClick={handleDismiss}
-                className="sq-button-gold mt-6 w-full text-sm"
+                className="sq-button-accent mt-6 w-full text-sm"
               >
                 ACKNOWLEDGED
               </motion.button>

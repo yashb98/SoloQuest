@@ -15,7 +15,30 @@ async function main() {
   // --- Hunter Profile (Step 1) ---
   const hunter = await prisma.hunter.upsert({
     where: { id: 1 },
-    update: {},
+    update: {
+      hunterName: "Yash",
+      class: "none",
+      title: "Newcomer",
+      rank: "E",
+      level: 1,
+      xp: 0,
+      xpToNext: 205,
+      gold: 0,
+      streak: 0,
+      bestStreak: 0,
+      streakShields: 0,
+      streakFreezes: 0,
+      statPoints: 0,
+      vitality: 0,
+      intel: 0,
+      hustle: 0,
+      wealth: 0,
+      focus: 0,
+      agentIQ: 0,
+      goldToMoneyRatio: 0.10,
+      prestigeCount: 0,
+      wakeUpTime: "06:30",
+    },
     create: {
       id: 1,
       hunterName: "Yash",
@@ -24,7 +47,7 @@ async function main() {
       rank: "E",
       level: 1,
       xp: 0,
-      xpToNext: 115,
+      xpToNext: 205,
       gold: 0,
       streak: 0,
       bestStreak: 0,
@@ -43,6 +66,23 @@ async function main() {
     },
   });
   console.log(`✅ Hunter: ${hunter.hunterName} | ${hunter.rank}-${hunter.level}`);
+
+  // --- Reset existing data on re-seed ---
+  // Reset all quests to incomplete
+  await prisma.quest.updateMany({ data: { isCompleted: false, completedAt: null } });
+  // Reset all dungeons
+  await prisma.dungeon.updateMany({
+    data: { isActive: false, isCompleted: false, isFailed: false, activatedAt: null, deadline: null, completedAt: null },
+  });
+  // Clear completion history
+  await prisma.completion.deleteMany({});
+  console.log("✅ Reset quests, dungeons, and completion history");
+
+  // Delete existing quests/dungeons/rewards/achievements to avoid duplicates on re-seed
+  await prisma.quest.deleteMany({});
+  await prisma.dungeon.deleteMany({});
+  await prisma.reward.deleteMany({});
+  await prisma.achievement.deleteMany({});
 
   // --- Full Quest Library (Step 4) ---
   const quests = [

@@ -157,19 +157,19 @@ export default function ExamPage() {
   if (examState === "idle") {
     return (
       <div className="space-y-6">
-        <h1 className="font-display font-bold text-2xl text-sq-gold">
-          GATE EXAM
+        <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">
+          Gate Exam
         </h1>
 
         {!isAtGate && nextGateLevel && (
           <div className="sq-panel p-6 space-y-3">
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-sq-blue" />
-              <span className="font-display font-semibold text-sq-text">
+              <span className="font-semibold text-sq-text">
                 Next Gate: Level {nextGateLevel}
               </span>
             </div>
-            <p className="font-mono text-sm text-sq-muted">
+            <p className="text-sm text-sq-muted">
               You are currently Level {hunter?.level}. Reach Level{" "}
               {nextGateLevel} to unlock the gate exam.
             </p>
@@ -180,11 +180,11 @@ export default function ExamPage() {
           <div className="sq-panel p-6 space-y-4 border-2 border-sq-gold/50">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-sq-gold animate-pulse" />
-              <span className="font-display font-bold text-sq-gold">
+              <span className="font-bold text-sq-gold">
                 GATE {nextGateLevel} — EXAM REQUIRED
               </span>
             </div>
-            <p className="font-mono text-sm text-sq-text">
+            <p className="text-sm text-sq-text">
               You cannot level past {nextGateLevel} without passing this
               examination. The exam covers topics relevant to your current rank.
             </p>
@@ -203,10 +203,10 @@ export default function ExamPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="sq-panel p-8 text-center space-y-4">
           <div className="w-12 h-12 border-2 border-sq-gold border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="font-display font-bold text-sq-gold">
+          <p className="font-bold text-sq-gold">
             GENERATING EXAMINATION...
           </p>
-          <p className="font-mono text-xs text-sq-muted">
+          <p className="text-xs text-sq-muted">
             The System is preparing your trial.
           </p>
         </div>
@@ -222,12 +222,12 @@ export default function ExamPage() {
       <div className="space-y-6">
         {/* Timer bar */}
         <div className="sq-panel p-3 flex items-center justify-between sticky top-0 z-40">
-          <span className="font-display font-bold text-sm text-sq-text">
+          <span className="font-bold text-sm text-sq-text">
             {examData.title}
           </span>
           <div className="flex items-center gap-4">
             <span
-              className={`font-mono text-lg font-bold flex items-center gap-1 ${
+              className={`text-lg font-bold flex items-center gap-1 ${
                 timeLeft < 120 ? "text-red-400 animate-pulse" : "text-sq-gold"
               }`}
             >
@@ -246,7 +246,7 @@ export default function ExamPage() {
         {/* Questions */}
         {examData.sections.map((section, si) => (
           <div key={si} className="space-y-4">
-            <h2 className="font-display font-bold text-lg text-sq-blue">
+            <h2 className="font-bold text-lg text-sq-blue">
               {section.section_name}
             </h2>
             {section.questions.map((q) => (
@@ -257,14 +257,14 @@ export default function ExamPage() {
                 className="sq-panel p-4 space-y-3"
               >
                 <div className="flex items-start justify-between">
-                  <span className="font-mono text-xs text-sq-muted">
+                  <span className="text-xs text-sq-muted">
                     {q.id} ({q.marks} marks)
                   </span>
-                  <span className="font-mono text-[10px] text-sq-muted uppercase">
+                  <span className="text-[10px] text-sq-muted uppercase">
                     {q.type}
                   </span>
                 </div>
-                <p className="font-mono text-sm text-sq-text whitespace-pre-wrap">
+                <p className="text-sm text-sq-text whitespace-pre-wrap">
                   {q.question}
                 </p>
 
@@ -290,7 +290,7 @@ export default function ExamPage() {
                           }
                           className="sr-only"
                         />
-                        <span className="font-mono text-sm text-sq-text">
+                        <span className="text-sm text-sq-text">
                           {opt}
                         </span>
                       </label>
@@ -307,7 +307,7 @@ export default function ExamPage() {
                     }
                     placeholder="Type your answer..."
                     rows={4}
-                    className="w-full bg-sq-bg border border-sq-border rounded-md px-3 py-2 text-sm text-sq-text font-mono resize-y"
+                    className="w-full bg-sq-bg border border-sq-border rounded-md px-3 py-2 text-sm text-sq-text resize-y"
                   />
                 )}
               </motion.div>
@@ -317,7 +317,7 @@ export default function ExamPage() {
 
         {/* Bottom submit */}
         <div className="flex items-center justify-between">
-          <span className="font-mono text-sm text-sq-muted">
+          <span className="text-sm text-sq-muted">
             {Object.keys(answers).length}/{allQuestions.length} answered
           </span>
           <button onClick={handleSubmit} className="sq-button-gold">
@@ -334,10 +334,10 @@ export default function ExamPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="sq-panel p-8 text-center space-y-4">
           <div className="w-12 h-12 border-2 border-sq-blue border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="font-display font-bold text-sq-blue">
+          <p className="font-bold text-sq-blue">
             GRADING IN PROGRESS...
           </p>
-          <p className="font-mono text-xs text-sq-muted">
+          <p className="text-xs text-sq-muted">
             The System is evaluating your performance.
           </p>
         </div>
@@ -362,16 +362,16 @@ export default function ExamPage() {
             <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
           )}
           <h2
-            className={`font-display font-bold text-3xl mb-2 ${
+            className={`font-bold text-3xl mb-2 ${
               results.passed ? "text-sq-green" : "text-red-400"
             }`}
           >
             {results.passed ? "GATE CLEARED" : "GATE FAILED"}
           </h2>
-          <p className="font-mono text-2xl text-sq-text mb-2">
+          <p className="text-2xl text-sq-text mb-2">
             Score: {results.score}%
           </p>
-          <p className="font-mono text-sm text-sq-muted">
+          <p className="text-sm text-sq-muted">
             Pass mark: {passMark}%
           </p>
         </div>
@@ -381,11 +381,11 @@ export default function ExamPage() {
           {results.results.map((r) => (
             <div key={r.questionId} className="sq-panel p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-sm text-sq-text font-bold">
+                <span className="text-sm text-sq-text font-bold">
                   {r.questionId}
                 </span>
                 <span
-                  className={`font-mono text-sm font-bold ${
+                  className={`text-sm font-bold ${
                     r.grade === "Excellent" || r.grade === "Good"
                       ? "text-sq-green"
                       : r.grade === "Partial"
@@ -396,9 +396,9 @@ export default function ExamPage() {
                   {r.marks_awarded} marks — {r.grade}
                 </span>
               </div>
-              <p className="font-mono text-xs text-sq-muted">{r.feedback}</p>
+              <p className="text-xs text-sq-muted">{r.feedback}</p>
               {r.study_recommendation && (
-                <p className="font-mono text-[10px] text-sq-blue">
+                <p className="text-[10px] text-sq-blue">
                   Study: {r.study_recommendation}
                 </p>
               )}

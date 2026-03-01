@@ -81,7 +81,7 @@ export default function CertsPage() {
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-8 bg-sq-border/30 rounded w-48" />
+        <div className="h-8 bg-sq-hover rounded w-48" />
         {[1, 2].map((i) => <div key={i} className="sq-panel p-6 h-32" />)}
       </div>
     );
@@ -93,7 +93,7 @@ export default function CertsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display font-bold text-2xl text-sq-gold">CERT ROADMAPS</h1>
+        <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">Cert Roadmaps</h1>
         <button onClick={() => setShowForm(!showForm)} className="sq-button-gold text-sm flex items-center gap-1">
           <Plus className="w-4 h-4" /> Add Cert
         </button>
@@ -109,13 +109,13 @@ export default function CertsPage() {
             className="sq-panel p-4 space-y-4"
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-bold text-sm text-sq-gold">Start Certification</h3>
+              <h3 className="font-bold text-sm text-sq-gold">Start Certification</h3>
               <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-sq-muted" /></button>
             </div>
 
             {/* Presets */}
             <div className="space-y-2">
-              <p className="font-mono text-xs text-sq-muted">Quick Start:</p>
+              <p className="text-xs text-sq-muted">Quick Start:</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {PRESETS.map((preset) => (
                   <button
@@ -123,8 +123,8 @@ export default function CertsPage() {
                     onClick={() => handleCreate(preset)}
                     className="text-left p-2 rounded border border-sq-border hover:border-sq-blue/50 transition-all"
                   >
-                    <span className="font-display text-xs font-bold text-sq-text block">{preset.certName}</span>
-                    <span className="font-mono text-[10px] text-sq-muted">{preset.provider} | {preset.totalWeeks}w | {preset.goldBonus}G</span>
+                    <span className="text-xs font-bold text-sq-text block">{preset.certName}</span>
+                    <span className="text-[10px] text-sq-muted">{preset.provider} | {preset.totalWeeks}w | {preset.goldBonus}G</span>
                   </button>
                 ))}
               </div>
@@ -132,7 +132,7 @@ export default function CertsPage() {
 
             {/* Custom */}
             <div className="border-t border-sq-border pt-3 space-y-2">
-              <p className="font-mono text-xs text-sq-muted">Or Custom:</p>
+              <p className="text-xs text-sq-muted">Or Custom:</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 <input value={formCert} onChange={(e) => setFormCert(e.target.value)} placeholder="Cert name" className="bg-sq-bg border border-sq-border rounded-md px-3 py-2 text-sm text-sq-text font-mono" />
                 <input value={formProvider} onChange={(e) => setFormProvider(e.target.value)} placeholder="Provider" className="bg-sq-bg border border-sq-border rounded-md px-3 py-2 text-sm text-sq-text font-mono" />
@@ -152,10 +152,10 @@ export default function CertsPage() {
           <motion.div key={cert.id} layout className="sq-panel p-4 space-y-3 border border-sq-blue/30">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-display font-bold text-sm text-sq-text">{cert.certName}</h3>
-                <span className="font-mono text-[10px] text-sq-muted">{cert.provider}</span>
+                <h3 className="font-bold text-sm text-sq-text">{cert.certName}</h3>
+                <span className="text-[10px] text-sq-muted">{cert.provider}</span>
               </div>
-              <span className="font-mono text-xs text-sq-blue">Week {cert.currentWeek}/{cert.totalWeeks}</span>
+              <span className="text-xs text-sq-blue">Week {cert.currentWeek}/{cert.totalWeeks}</span>
             </div>
 
             {/* Progress bar */}
@@ -164,10 +164,10 @@ export default function CertsPage() {
             </div>
 
             <div className="flex items-center gap-3 text-xs">
-              <span className="font-mono text-sq-muted">{cert.weeklyHours}h/week</span>
-              <span className="font-mono text-sq-gold">{cert.goldBonus}G on pass</span>
+              <span className="text-sq-muted">{cert.weeklyHours}h/week</span>
+              <span className="text-sq-gold">{cert.goldBonus}G on pass</span>
               {cert.targetExamDate && (
-                <span className="font-mono text-sq-muted">
+                <span className="text-sq-muted">
                   Exam: {new Date(cert.targetExamDate).toLocaleDateString()}
                 </span>
               )}
@@ -190,15 +190,15 @@ export default function CertsPage() {
       {/* Passed Certs */}
       {passedCerts.length > 0 && (
         <div className="space-y-3">
-          <h2 className="font-display font-semibold text-sm text-sq-green flex items-center gap-2">
+          <h2 className="font-semibold text-sm text-sq-green flex items-center gap-2">
             <Trophy className="w-4 h-4" /> CERTIFIED
           </h2>
           {passedCerts.map((cert) => (
             <div key={cert.id} className="sq-panel p-3 border border-sq-green/30 opacity-80">
               <div className="flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-sq-green" />
-                <span className="font-display text-sm text-sq-text">{cert.certName}</span>
-                <span className="font-mono text-[10px] text-sq-green">+{cert.goldBonus}G earned</span>
+                <span className="text-sm text-sq-text">{cert.certName}</span>
+                <span className="text-[10px] text-sq-green">+{cert.goldBonus}G earned</span>
               </div>
             </div>
           ))}
@@ -208,7 +208,7 @@ export default function CertsPage() {
       {activeCerts.length === 0 && passedCerts.length === 0 && (
         <div className="sq-panel p-8 text-center">
           <GraduationCap className="w-8 h-8 text-sq-muted mx-auto mb-2" />
-          <p className="font-mono text-sm text-sq-muted">No certification roadmaps. Start one to earn massive Gold bonuses.</p>
+          <p className="text-sm text-sq-muted">No certification roadmaps. Start one to earn massive Gold bonuses.</p>
         </div>
       )}
     </div>

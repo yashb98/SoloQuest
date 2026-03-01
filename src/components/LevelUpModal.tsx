@@ -33,7 +33,7 @@ export default function LevelUpModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
@@ -41,7 +41,7 @@ export default function LevelUpModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: "spring", damping: 15, stiffness: 200 }}
-            className="relative sq-panel p-8 max-w-sm mx-4 text-center border-2 border-sq-gold shadow-sq-gold-glow"
+            className="relative bg-white rounded-2xl p-8 max-w-sm mx-4 text-center border-2 border-sq-accent shadow-sq-accent-glow"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -51,7 +51,6 @@ export default function LevelUpModal({
               <X className="w-5 h-5" />
             </button>
 
-            {/* Level-up content */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -65,7 +64,7 @@ export default function LevelUpModal({
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="font-display font-bold text-3xl text-sq-gold mb-2"
+              className="font-bold text-3xl text-sq-accent mb-2"
             >
               LEVEL UP!
             </motion.h2>
@@ -76,24 +75,24 @@ export default function LevelUpModal({
               transition={{ delay: 0.4 }}
               className="space-y-2"
             >
-              <p className="font-mono text-lg text-sq-text">
+              <p className="text-lg text-sq-text">
                 {levelsGained > 1 ? `+${levelsGained} Levels! ` : ""}You have reached{" "}
-                <span className="text-sq-gold font-bold">
+                <span className="text-sq-accent font-bold">
                   {newRank}-{newLevel}
                 </span>
               </p>
-              <p className="font-mono text-sm text-sq-muted">
+              <p className="text-sm text-sq-muted">
                 The System acknowledges your progress.
               </p>
               {(statPointsEarned > 0 || goldBonus > 0) && (
                 <div className="mt-3 space-y-1">
                   {statPointsEarned > 0 && (
-                    <p className="font-mono text-xs text-sq-blue">
+                    <p className="text-xs text-sq-blue font-medium">
                       +{statPointsEarned} Stat Point{statPointsEarned > 1 ? "s" : ""} earned
                     </p>
                   )}
                   {goldBonus > 0 && (
-                    <p className="font-mono text-xs text-sq-gold">
+                    <p className="text-xs text-sq-gold font-medium">
                       +{goldBonus} Gold bonus
                     </p>
                   )}
@@ -106,12 +105,12 @@ export default function LevelUpModal({
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="mt-6 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
+                className="mt-6 p-3 bg-red-50 border border-red-200 rounded-xl"
               >
-                <p className="font-display font-bold text-red-400 text-sm">
+                <p className="font-bold text-red-600 text-sm">
                   GATE {gateLevel} DETECTED
                 </p>
-                <p className="font-mono text-xs text-sq-muted mt-1">
+                <p className="text-xs text-sq-muted mt-1">
                   An examination is required to advance beyond this point.
                 </p>
               </motion.div>
@@ -122,7 +121,7 @@ export default function LevelUpModal({
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7 }}
               onClick={onClose}
-              className="sq-button-gold mt-6 w-full"
+              className="sq-button-accent mt-6 w-full"
             >
               CONTINUE
             </motion.button>

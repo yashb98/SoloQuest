@@ -69,15 +69,15 @@ export default function MentorPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
-      <h1 className="font-display font-bold text-2xl text-sq-gold mb-4">AI MENTOR</h1>
+      <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em] mb-4">AI Mentor</h1>
 
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1">
         {messages.length === 0 && (
           <div className="sq-panel p-6 text-center space-y-4">
-            <Bot className="w-10 h-10 text-sq-gold mx-auto" />
-            <p className="font-display font-bold text-sq-text">The System is ready to guide you.</p>
-            <p className="font-mono text-xs text-sq-muted">Ask for quest suggestions, study advice, stat analysis, or motivation.</p>
+            <Bot className="w-10 h-10 text-sq-accent mx-auto" />
+            <p className="font-bold text-sq-text">The System is ready to guide you.</p>
+            <p className="text-xs text-sq-muted">Ask for quest suggestions, study advice, stat analysis, or motivation.</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {suggestions.map((s) => (
                 <button
@@ -85,7 +85,7 @@ export default function MentorPage() {
                   onClick={() => { setInput(s); }}
                   className="text-left p-2 rounded border border-sq-border hover:border-sq-gold/30 transition-all"
                 >
-                  <span className="font-mono text-xs text-sq-muted">{s}</span>
+                  <span className="text-xs text-sq-muted">{s}</span>
                 </button>
               ))}
             </div>
@@ -100,16 +100,16 @@ export default function MentorPage() {
             className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             {msg.role === "mentor" && (
-              <div className="w-7 h-7 rounded-md bg-sq-gold/20 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4 text-sq-gold" />
+              <div className="w-7 h-7 rounded-md bg-sq-accent/10 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-4 h-4 text-sq-accent" />
               </div>
             )}
             <div className={`max-w-[80%] p-3 rounded-lg ${
               msg.role === "user"
                 ? "bg-sq-blue/20 border border-sq-blue/30"
-                : "sq-panel border border-sq-gold/20"
+                : "sq-panel border border-sq-accent/20"
             }`}>
-              <p className="font-mono text-sm text-sq-text whitespace-pre-wrap">{msg.content}</p>
+              <p className="text-sm text-sq-text whitespace-pre-wrap">{msg.content}</p>
             </div>
             {msg.role === "user" && (
               <div className="w-7 h-7 rounded-md bg-sq-blue/20 flex items-center justify-center flex-shrink-0">
@@ -121,10 +121,10 @@ export default function MentorPage() {
 
         {isLoading && (
           <div className="flex gap-2">
-            <div className="w-7 h-7 rounded-md bg-sq-gold/20 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-sq-gold animate-pulse" />
+            <div className="w-7 h-7 rounded-md bg-sq-accent/10 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-sq-accent animate-pulse" />
             </div>
-            <div className="sq-panel p-3 border border-sq-gold/20">
+            <div className="sq-panel p-3 border border-sq-accent/20">
               <div className="flex gap-1">
                 <div className="w-2 h-2 rounded-full bg-sq-gold animate-bounce" style={{ animationDelay: "0ms" }} />
                 <div className="w-2 h-2 rounded-full bg-sq-gold animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -144,7 +144,7 @@ export default function MentorPage() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
           placeholder="Ask the Mentor..."
-          className="flex-1 bg-sq-bg border border-sq-border rounded-md px-4 py-2.5 text-sm text-sq-text font-mono focus:border-sq-gold/50 focus:outline-none transition-colors"
+          className="flex-1 bg-sq-bg border border-sq-border rounded-md px-4 py-2.5 text-sm text-sq-text focus:border-sq-gold/50 focus:outline-none transition-colors"
           disabled={isLoading}
         />
         <button

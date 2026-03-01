@@ -25,7 +25,7 @@ const tierColors: Record<string, string> = {
   C: "border-sq-blue/50 text-sq-blue",
   B: "border-sq-purple/50 text-sq-purple",
   A: "border-orange-500/50 text-orange-400",
-  S: "border-sq-gold/50 text-sq-gold shadow-sq-gold-glow",
+  S: "border-sq-gold/50 text-sq-gold shadow-sq-accent-glow",
 };
 
 export default function ShopPage() {
@@ -74,13 +74,13 @@ export default function ShopPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display font-bold text-2xl text-sq-gold">
-          REWARD SHOP
+        <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">
+          Reward Shop
         </h1>
         {hunter && (
           <div className="flex items-center gap-1.5">
             <Coins className="w-5 h-5 text-sq-gold" />
-            <span className="font-mono text-lg text-sq-gold font-bold">
+            <span className="text-lg text-sq-gold font-bold">
               {hunter.gold.toLocaleString()}
             </span>
           </div>
@@ -90,7 +90,7 @@ export default function ShopPage() {
       {groupedRewards.map(({ tier, rewards: tierRewards }) => (
         <div key={tier} className="space-y-3">
           <h2
-            className={`font-display font-bold text-lg ${
+            className={`font-bold text-lg ${
               tierColors[tier]?.split(" ").pop() || "text-sq-muted"
             }`}
           >
@@ -112,15 +112,15 @@ export default function ShopPage() {
                   } ${reward.isRedeemed ? "opacity-50" : ""}`}
                 >
                   <div className="space-y-2">
-                    <h3 className="font-display font-semibold text-sm text-sq-text">
+                    <h3 className="font-semibold text-sm text-sq-text">
                       {reward.title}
                     </h3>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-sq-gold">
+                        <span className="text-xs text-sq-gold">
                           {reward.costGold} G
                         </span>
-                        <span className="font-mono text-[10px] text-sq-muted">
+                        <span className="text-[10px] text-sq-muted">
                           (£{reward.realCost.toFixed(2)})
                         </span>
                       </div>
@@ -136,7 +136,7 @@ export default function ShopPage() {
                         <button
                           onClick={() => handleRedeem(reward.id)}
                           disabled={!canAfford || redeemingId === reward.id}
-                          className={`px-3 py-1 rounded text-xs font-display font-bold transition-all
+                          className={`px-3 py-1 rounded text-xs font-bold transition-all
                             ${
                               canAfford
                                 ? "sq-button-gold"
@@ -164,7 +164,7 @@ export default function ShopPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
             onClick={() => setShowRedeemModal(false)}
           >
             <motion.div
@@ -172,7 +172,7 @@ export default function ShopPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", damping: 15 }}
-              className="sq-panel p-8 max-w-sm mx-4 text-center border-2 border-sq-gold shadow-sq-gold-glow"
+              className="sq-panel p-8 max-w-sm mx-4 text-center border-2 border-sq-gold shadow-sq-accent-glow"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -182,10 +182,10 @@ export default function ShopPage() {
                 <X className="w-5 h-5" />
               </button>
               <Gift className="w-12 h-12 text-sq-gold mx-auto mb-4" />
-              <h2 className="font-display font-bold text-2xl text-sq-gold mb-2">
+              <h2 className="font-bold text-2xl text-sq-gold mb-2">
                 REWARD UNLOCKED!
               </h2>
-              <p className="font-mono text-sm text-sq-text">
+              <p className="text-sm text-sq-text">
                 {redeemedReward}
               </p>
               <button
