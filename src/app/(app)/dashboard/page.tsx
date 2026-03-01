@@ -1,14 +1,112 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import QuestBoard from "@/components/QuestBoard";
+import LevelUpModal from "@/components/LevelUpModal";
+
+interface Quest {
+  id: number;
+  title: string;
+  category: string;
+  difficulty: string;
+  xpBase: number;
+  goldBase: number;
+  statTarget: string;
+  isCompleted: boolean;
+}
+
+interface LevelUpData {
+  newLevel: number;
+  newRank: string;
+  isGateLocked: boolean;
+  gateLevel: number | null;
+}
+
 export default function DashboardPage() {
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [loadingQuestId, setLoadingQuestId] = useState<number | null>(null);
+  const [levelUpData, setLevelUpData] = useState<LevelUpData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchQuests = useCallback(async () => {
+    const res = await fetch("/api/quests");
+    const data = await res.json();
+    setQuests(data);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchQuests();
+  }, [fetchQuests]);
+
+  const handleCompleteQuest = async (questId: number) => {
+    setLoadingQuestId(questId);
+
+    try {
+      const res = await fetch("/api/quests/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questId }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // Update quest in local state
+        setQuests((prev) =>
+          prev.map((q) =>
+            q.id === questId ? { ...q, isCompleted: true } : q
+          )
+        );
+
+        // Show level-up modal if applicable
+        if (data.didLevelUp || data.isGateLocked) {
+          setLevelUpData({
+            newLevel: data.newLevel,
+            newRank: data.newRank,
+            isGateLocked: data.isGateLocked,
+            gateLevel: data.gateLevel,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to complete quest:", error);
+    } finally {
+      setLoadingQuestId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="sq-panel p-6 animate-pulse">
+          <div className="h-6 bg-sq-border/30 rounded w-48 mb-4" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-20 bg-sq-border/20 rounded" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <h1 className="font-display font-bold text-2xl text-sq-gold">
-        DASHBOARD
-      </h1>
-      <div className="sq-panel p-6">
-        <p className="text-sq-muted font-mono text-sm">
-          Hunter command center loading...
-        </p>
-      </div>
+      <QuestBoard
+        quests={quests}
+        onComplete={handleCompleteQuest}
+        loadingQuestId={loadingQuestId}
+      />
+
+      <LevelUpModal
+        isOpen={levelUpData !== null}
+        onClose={() => setLevelUpData(null)}
+        newLevel={levelUpData?.newLevel ?? 1}
+        newRank={levelUpData?.newRank ?? "E"}
+        isGateLocked={levelUpData?.isGateLocked ?? false}
+        gateLevel={levelUpData?.gateLevel ?? null}
+      />
     </div>
   );
 }
