@@ -242,6 +242,38 @@ jobs. Never use vague titles.`;
   return aiCall(prompt, undefined, 2000, true);
 }
 
+// --- Task Details Generation (for Planner and Quest Board) ---
+export async function generateTaskDetails(
+  title: string,
+  category: string,
+  type: "todo" | "quest" = "todo"
+): Promise<string> {
+  const contextLabel = type === "quest" ? "quest" : "task";
+  const prompt = `You are a productivity coach. Given this ${contextLabel} title, generate a concise actionable breakdown.
+
+${contextLabel.charAt(0).toUpperCase() + contextLabel.slice(1)}: "${title}"
+Category: ${category}
+
+Return a short description (1-2 sentences explaining WHY this matters), followed by 3-6 specific, actionable steps.
+
+Format:
+[Description sentence]
+
+Steps:
+1. [First specific step]
+2. [Second specific step]
+3. [Third specific step]
+...
+
+Tips:
+- [One practical tip]
+- [One resource or tool suggestion]
+
+Keep it under 150 words total. Be specific, not generic. Use concrete numbers and actions.`;
+
+  return aiCall(prompt, undefined, 400);
+}
+
 // --- Weekly Report ---
 interface WeeklyReportContext {
   hunterName: string;

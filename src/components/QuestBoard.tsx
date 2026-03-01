@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Sparkles, Loader2 } from "lucide-react";
 import QuestCard from "./QuestCard";
 
 interface Quest {
@@ -180,6 +180,25 @@ function AddQuestModal({ onClose, onCreated }: { onClose: () => void; onCreated:
   const [xpBase, setXpBase] = useState(50);
   const [goldBase, setGoldBase] = useState(10);
   const [saving, setSaving] = useState(false);
+  const [aiPreview, setAiPreview] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  const handleAiGenerate = async () => {
+    if (!title.trim()) return;
+    setAiGenerating(true);
+    try {
+      const res = await fetch("/api/ai/generate-task-details", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim(), category, type: "quest" }),
+      });
+      const data = await res.json();
+      setAiPreview(data.description || "");
+    } catch {
+      setAiPreview("");
+    }
+    setAiGenerating(false);
+  };
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
@@ -207,7 +226,7 @@ function AddQuestModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        className="sq-panel p-6 max-w-md w-full mx-4 space-y-5"
+        className="sq-panel p-6 max-w-lg w-full mx-4 space-y-5 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -217,15 +236,36 @@ function AddQuestModal({ onClose, onCreated }: { onClose: () => void; onCreated:
           </button>
         </div>
 
-        {/* Title */}
+        {/* Title + AI Generate */}
         <div>
-          <label className="text-[13px] font-semibold text-sq-text block mb-1.5">Quest Title</label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-[13px] font-semibold text-sq-text">Quest Title</label>
+            <button onClick={handleAiGenerate} disabled={!title.trim() || aiGenerating}
+              className="flex items-center gap-1 text-[12px] font-semibold text-sq-accent hover:text-sq-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {aiGenerating ? "Generating..." : "AI Specs"}
+            </button>
+          </div>
           <input
             type="text" value={title} onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Complete a portfolio project..."
             className="w-full px-4 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text placeholder:text-sq-muted/50 focus:outline-none focus:border-sq-accent"
           />
         </div>
+
+        {/* AI Generated Preview */}
+        {aiPreview && (
+          <div className="p-3 rounded-xl bg-sq-hover/50 border border-sq-accent/20">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-sq-accent" />
+              <span className="text-[12px] font-bold text-sq-accent">AI-Generated Specifications</span>
+            </div>
+            <pre className="text-[13px] text-sq-text whitespace-pre-wrap font-sans leading-relaxed">
+              {aiPreview}
+            </pre>
+          </div>
+        )}
 
         {/* Category + Difficulty row */}
         <div className="grid grid-cols-2 gap-3">

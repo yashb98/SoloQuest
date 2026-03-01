@@ -1,4 +1,4 @@
-// api/todos/route.ts — GET todos by date + POST create/toggle/delete
+// api/todos/route.ts — GET todos by date + POST create/toggle/delete/update/reorder
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   const todos = await prisma.todoItem.findMany({
     where: { date },
-    orderBy: [{ isCompleted: "asc" }, { priority: "desc" }, { createdAt: "asc" }],
+    orderBy: [{ isCompleted: "asc" }, { sortOrder: "asc" }, { priority: "desc" }, { createdAt: "asc" }],
   });
 
   return NextResponse.json({ todos, date, today: todayStr(), tomorrow: tomorrowStr() });
@@ -32,8 +32,9 @@ export async function POST(req: NextRequest) {
 
   // Create a new todo
   if (!action || action === "create") {
-    const { title, date, priority, category } = body as {
+    const { title, description, date, priority, category } = body as {
       title: string;
+      description?: string;
       date?: string;
       priority?: number;
       category?: string;
@@ -46,11 +47,21 @@ export async function POST(req: NextRequest) {
     const validCategories = ["general", "health", "learning", "jobs", "finance", "focus", "food", "mental", "agentiq"];
     const validDate = date || tomorrowStr();
 
+    // Get the max sortOrder for this date to place new items at the end
+    const maxSort = await prisma.todoItem.findFirst({
+      where: { date: validDate },
+      orderBy: { sortOrder: "desc" },
+      select: { sortOrder: true },
+    });
+    const nextSortOrder = (maxSort?.sortOrder ?? -1) + 1;
+
     const todo = await prisma.todoItem.create({
       data: {
         title: title.trim(),
+        description: description?.trim() || "",
         date: validDate,
         priority: Math.min(2, Math.max(0, priority || 0)),
+        sortOrder: nextSortOrder,
         category: validCategories.includes(category || "") ? category! : "general",
       },
     });
@@ -75,6 +86,50 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, todo: updated });
+  }
+
+  // Update a todo (edit title, description, priority, category)
+  if (action === "update") {
+    const { todoId, title, description, priority, category } = body as {
+      todoId: number;
+      title?: string;
+      description?: string;
+      priority?: number;
+      category?: string;
+    };
+    if (!todoId) return NextResponse.json({ error: "todoId required" }, { status: 400 });
+
+    const todo = await prisma.todoItem.findUnique({ where: { id: todoId } });
+    if (!todo) return NextResponse.json({ error: "Todo not found" }, { status: 404 });
+
+    const validCategories = ["general", "health", "learning", "jobs", "finance", "focus", "food", "mental", "agentiq"];
+    const updateData: Record<string, unknown> = {};
+    if (title !== undefined && title.trim()) updateData.title = title.trim();
+    if (description !== undefined) updateData.description = description;
+    if (priority !== undefined) updateData.priority = Math.min(2, Math.max(0, priority));
+    if (category !== undefined && validCategories.includes(category)) updateData.category = category;
+
+    const updated = await prisma.todoItem.update({
+      where: { id: todoId },
+      data: updateData,
+    });
+
+    return NextResponse.json({ success: true, todo: updated });
+  }
+
+  // Reorder todos (drag & drop) — receives array of { id, sortOrder }
+  if (action === "reorder") {
+    const { items } = body as { items: Array<{ id: number; sortOrder: number }> };
+    if (!items?.length) return NextResponse.json({ error: "items required" }, { status: 400 });
+
+    for (const item of items) {
+      await prisma.todoItem.update({
+        where: { id: item.id },
+        data: { sortOrder: item.sortOrder },
+      });
+    }
+
+    return NextResponse.json({ success: true });
   }
 
   // Delete a todo
@@ -102,11 +157,18 @@ export async function POST(req: NextRequest) {
         where: { title: todo.title, date: tomorrow },
       });
       if (!exists) {
+        const maxSort = await prisma.todoItem.findFirst({
+          where: { date: tomorrow },
+          orderBy: { sortOrder: "desc" },
+          select: { sortOrder: true },
+        });
         await prisma.todoItem.create({
           data: {
             title: todo.title,
+            description: todo.description,
             date: tomorrow,
             priority: todo.priority,
+            sortOrder: (maxSort?.sortOrder ?? -1) + 1,
             category: todo.category,
           },
         });

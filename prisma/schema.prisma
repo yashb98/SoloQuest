@@ -216,10 +216,12 @@ model MentorLog {
 model TodoItem {
   id          Int      @id @default(autoincrement())
   title       String
+  description String   @default("") // AI-generated steps/specs
   date        String   // YYYY-MM-DD format - the date this todo is for
   isCompleted Boolean  @default(false)
   completedAt DateTime?
   priority    Int      @default(0) // 0=normal, 1=high, 2=critical
+  sortOrder   Int      @default(0) // for drag-and-drop reordering
   category    String   @default("general") // general, health, learning, jobs, finance, focus
   createdAt   DateTime @default(now())
 }
