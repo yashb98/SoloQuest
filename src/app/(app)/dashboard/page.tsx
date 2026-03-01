@@ -13,6 +13,7 @@ interface Quest {
   xpBase: number;
   goldBase: number;
   statTarget: string;
+  statGain: number;
   isCompleted: boolean;
 }
 
@@ -128,6 +129,7 @@ export default function DashboardPage() {
         quests={quests}
         onComplete={handleCompleteQuest}
         onUndo={handleUndoQuest}
+        onQuestCreated={fetchQuests}
         loadingQuestId={loadingQuestId}
       />
 

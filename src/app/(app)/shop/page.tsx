@@ -112,31 +112,31 @@ export default function ShopPage() {
                   } ${reward.isRedeemed ? "opacity-50" : ""}`}
                 >
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm text-sq-text">
+                    <h3 className="font-semibold text-[15px] text-sq-text">
                       {reward.title}
                     </h3>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-sq-gold">
+                        <span className="text-[14px] text-sq-gold font-medium">
                           {reward.costGold} G
                         </span>
-                        <span className="text-[10px] text-sq-muted">
+                        <span className="text-[12px] text-sq-muted">
                           (£{reward.realCost.toFixed(2)})
                         </span>
                       </div>
                       {reward.isRedeemed ? (
-                        <span className="flex items-center gap-1 text-sq-green text-xs font-mono">
-                          <Check className="w-3 h-3" /> Redeemed
+                        <span className="flex items-center gap-1 text-sq-green text-[13px] font-medium">
+                          <Check className="w-3.5 h-3.5" /> Redeemed
                         </span>
                       ) : isLocked ? (
-                        <span className="flex items-center gap-1 text-sq-muted text-xs font-mono">
-                          <Lock className="w-3 h-3" /> Locked
+                        <span className="flex items-center gap-1 text-sq-muted text-[13px] font-medium">
+                          <Lock className="w-3.5 h-3.5" /> Locked
                         </span>
                       ) : (
                         <button
                           onClick={() => handleRedeem(reward.id)}
                           disabled={!canAfford || redeemingId === reward.id}
-                          className={`px-3 py-1 rounded text-xs font-bold transition-all
+                          className={`px-3 py-1.5 rounded-lg text-[13px] font-bold transition-all
                             ${
                               canAfford
                                 ? "sq-button-gold"

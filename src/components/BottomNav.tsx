@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Scroll, ShoppingBag, Swords, Trophy, Target,
-  Briefcase, GraduationCap, BarChart3, User, Bot,
+  Briefcase, GraduationCap, BarChart3, User, Bot, CalendarDays,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home", emoji: "🏠" },
   { href: "/quests", icon: Scroll, label: "Quests", emoji: "⚔️" },
   { href: "/dungeons", icon: Swords, label: "Dungeons", emoji: "🏰" },
+  { href: "/planner", icon: CalendarDays, label: "Planner", emoji: "📋" },
   { href: "/goals", icon: Target, label: "Goals", emoji: "🎯" },
   { href: "/applications", icon: Briefcase, label: "Jobs", emoji: "💼" },
   { href: "/achievements", icon: Trophy, label: "Badges", emoji: "🏅" },

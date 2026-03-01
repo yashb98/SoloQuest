@@ -156,15 +156,15 @@ export default function ApplicationsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-sm text-sq-text">{app.company}</h3>
-                    <span className={`text-[10px] font-bold ${stage?.color || "text-sq-muted"}`}>
+                    <h3 className="font-bold text-[15px] text-sq-text">{app.company}</h3>
+                    <span className={`text-[12px] font-bold ${stage?.color || "text-sq-muted"}`}>
                       {stage?.label?.toUpperCase() || app.status}
                     </span>
                   </div>
-                  <p className="text-xs text-sq-muted mt-0.5">{app.role}</p>
+                  <p className="text-[14px] text-sq-muted mt-0.5">{app.role}</p>
                   <div className="flex items-center gap-3 mt-2">
-                    {app.salaryRange && <span className="text-[10px] text-sq-gold">{app.salaryRange}</span>}
-                    <span className="text-[10px] text-sq-muted">
+                    {app.salaryRange && <span className="text-[12px] text-sq-gold">{app.salaryRange}</span>}
+                    <span className="text-[12px] text-sq-muted">
                       {new Date(app.dateApplied).toLocaleDateString()}
                     </span>
                     {app.link && (
@@ -178,7 +178,7 @@ export default function ApplicationsPage() {
                   {nextStage && app.status !== "rejected" && app.status !== "accepted" && (
                     <button
                       onClick={() => handleUpdateStatus(app.id, nextStage)}
-                      className="px-2 py-1 rounded text-[10px] font-bold border border-sq-green/30 text-sq-green hover:bg-sq-green/10 flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-lg text-[12px] font-bold border border-sq-green/30 text-sq-green hover:bg-sq-green/10 flex items-center gap-1"
                     >
                       <ChevronRight className="w-3 h-3" />
                       {STAGES.find((s) => s.key === nextStage)?.label}
@@ -187,7 +187,7 @@ export default function ApplicationsPage() {
                   {app.status !== "rejected" && app.status !== "accepted" && (
                     <button
                       onClick={() => handleUpdateStatus(app.id, "rejected")}
-                      className="px-2 py-1 rounded text-[10px] font-bold border border-red-500/30 text-red-400 hover:bg-red-500/10"
+                      className="px-2.5 py-1 rounded-lg text-[12px] font-bold border border-red-500/30 text-red-400 hover:bg-red-500/10"
                     >
                       Reject
                     </button>

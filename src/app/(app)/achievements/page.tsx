@@ -111,31 +111,31 @@ export default function AchievementsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-bold text-sm text-sq-text">
+                  <h3 className="font-bold text-[15px] text-sq-text">
                     {achievement.name}
                   </h3>
-                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                  <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
                     rarityColors[achievement.rarity]?.split(" ").pop() || "text-sq-muted"
                   } bg-sq-bg border ${rarityColors[achievement.rarity]?.split(" ")[0] || "border-sq-border"}`}>
                     {achievement.rarity.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-[11px] text-sq-muted mt-1">{achievement.description}</p>
+                <p className="text-[13px] text-sq-muted mt-1">{achievement.description}</p>
                 <div className="flex items-center gap-3 mt-2">
                   {achievement.xpReward > 0 && (
-                    <span className="text-[10px] text-sq-gold">+{achievement.xpReward} XP</span>
+                    <span className="text-[12px] text-sq-gold">+{achievement.xpReward} XP</span>
                   )}
                   {achievement.goldReward > 0 && (
-                    <span className="text-[10px] text-sq-gold">+{achievement.goldReward} G</span>
+                    <span className="text-[12px] text-sq-gold">+{achievement.goldReward} G</span>
                   )}
                   {achievement.titleReward && (
-                    <span className="text-[10px] text-sq-purple flex items-center gap-1">
+                    <span className="text-[12px] text-sq-purple flex items-center gap-1">
                       <Star className="w-3 h-3" /> {achievement.titleReward}
                     </span>
                   )}
                 </div>
                 {achievement.isUnlocked && achievement.unlockedAt && (
-                  <p className="text-[9px] text-sq-green mt-1">
+                  <p className="text-[11px] text-sq-green mt-1">
                     Unlocked {new Date(achievement.unlockedAt).toLocaleDateString()}
                   </p>
                 )}

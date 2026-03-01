@@ -125,29 +125,29 @@ export default function ProfilePage() {
         <div className="sq-panel p-4 text-center">
           <Flame className="w-5 h-5 text-orange-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-orange-500">{hunter.streak}</p>
-          <p className="text-[10px] text-sq-muted font-medium uppercase">Streak</p>
-          <p className="text-[9px] text-sq-muted">Best: {hunter.bestStreak}</p>
+          <p className="text-[12px] text-sq-muted font-medium uppercase">Streak</p>
+          <p className="text-[11px] text-sq-muted">Best: {hunter.bestStreak}</p>
         </div>
         <div className="sq-panel p-4 text-center">
           <Coins className="w-5 h-5 text-sq-gold mx-auto mb-1" />
           <p className="text-lg font-bold text-sq-gold">{hunter.gold.toLocaleString()}</p>
-          <p className="text-[10px] text-sq-muted font-medium uppercase">Gold</p>
-          <p className="text-[9px] text-sq-muted">${(hunter.gold * hunter.goldToMoneyRatio).toFixed(0)} saved</p>
+          <p className="text-[12px] text-sq-muted font-medium uppercase">Gold</p>
+          <p className="text-[11px] text-sq-muted">${(hunter.gold * hunter.goldToMoneyRatio).toFixed(0)} saved</p>
         </div>
         <div className="sq-panel p-4 text-center">
           <Award className="w-5 h-5 text-sq-blue mx-auto mb-1" />
           <p className="text-lg font-bold text-sq-blue">{hunter.statPoints}</p>
-          <p className="text-[10px] text-sq-muted font-medium uppercase">Stat Pts</p>
-          <p className="text-[9px] text-sq-muted">{hunter.streakShields} shields</p>
+          <p className="text-[12px] text-sq-muted font-medium uppercase">Stat Pts</p>
+          <p className="text-[11px] text-sq-muted">{hunter.streakShields} shields</p>
         </div>
       </div>
 
       {/* 6 Core Stats */}
       <div className="sq-panel p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-sm text-sq-text">Hunter Stats</h3>
+          <h3 className="font-semibold text-[15px] text-sq-text">Hunter Stats</h3>
           {hunter.statPoints > 0 && (
-            <span className="text-xs text-sq-accent font-medium animate-pulse">{hunter.statPoints} pts to allocate</span>
+            <span className="text-[13px] text-sq-accent font-medium animate-pulse">{hunter.statPoints} pts to allocate</span>
           )}
         </div>
         {stats.map((s) => (
@@ -168,7 +168,7 @@ export default function ProfilePage() {
 
       {/* System Info */}
       <div className="sq-panel p-5 space-y-2">
-        <h3 className="font-semibold text-sm text-sq-text">System Info</h3>
+        <h3 className="font-semibold text-[15px] text-sq-text">System Info</h3>
         <div className="flex items-center gap-2 text-sm">
           <Calendar className="w-4 h-4 text-sq-muted" />
           <span className="text-sq-muted">Joined: {joinDate}</span>
@@ -206,7 +206,7 @@ export default function ProfilePage() {
                     className="p-4 rounded-xl border border-sq-border hover:border-sq-accent/30 transition-all text-left space-y-1"
                   >
                     <div className={`flex items-center gap-2 ${cfg.color}`}>{cfg.icon}<span className="font-bold text-sm">{cfg.label}</span></div>
-                    <p className="text-[10px] text-sq-muted">{cfg.buff}</p>
+                    <p className="text-[12px] text-sq-muted">{cfg.buff}</p>
                   </button>
                 ))}
               </div>

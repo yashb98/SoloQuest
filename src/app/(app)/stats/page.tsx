@@ -64,28 +64,28 @@ export default function StatsPage() {
         <div className="sq-panel p-4 text-center">
           <Trophy className="w-5 h-5 text-sq-accent mx-auto mb-1" />
           <p className="text-lg font-bold text-sq-accent">{hunter.rank}-{hunter.level}</p>
-          <p className="text-[10px] text-sq-muted font-medium uppercase">Rank</p>
+          <p className="text-[12px] text-sq-muted font-medium uppercase">Rank</p>
         </div>
         <div className="sq-panel p-4 text-center">
           <Target className="w-5 h-5 text-sq-blue mx-auto mb-1" />
           <p className="text-lg font-bold text-sq-blue">{totalStats}</p>
-          <p className="text-[10px] text-sq-muted font-medium uppercase">Total Stats</p>
+          <p className="text-[12px] text-sq-muted font-medium uppercase">Total Stats</p>
         </div>
         <div className="sq-panel p-4 text-center">
           <Flame className="w-5 h-5 text-orange-500 mx-auto mb-1" />
           <p className="text-lg font-bold text-orange-500">{hunter.streak}</p>
-          <p className="text-[10px] text-sq-muted font-medium uppercase">Streak</p>
+          <p className="text-[12px] text-sq-muted font-medium uppercase">Streak</p>
         </div>
         <div className="sq-panel p-4 text-center">
           <Coins className="w-5 h-5 text-sq-gold mx-auto mb-1" />
           <p className="text-lg font-bold text-sq-gold">{hunter.gold.toLocaleString()}</p>
-          <p className="text-[10px] text-sq-muted font-medium uppercase">Gold</p>
+          <p className="text-[12px] text-sq-muted font-medium uppercase">Gold</p>
         </div>
       </div>
 
       {/* Radar Chart */}
       <div className="sq-panel p-5">
-        <h2 className="font-semibold text-sm text-sq-text mb-4">Stat Distribution</h2>
+        <h2 className="font-semibold text-[15px] text-sq-text mb-4">Stat Distribution</h2>
         <div className="w-full h-72">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={radarData}>
@@ -100,34 +100,34 @@ export default function StatsPage() {
 
       {/* Stat breakdown */}
       <div className="sq-panel p-5 space-y-3">
-        <h2 className="font-semibold text-sm text-sq-text">Stat Details</h2>
+        <h2 className="font-semibold text-[15px] text-sq-text">Stat Details</h2>
         {radarData.map((stat) => (
           <div key={stat.stat} className="flex items-center gap-3">
-            <span className="text-xs text-sq-muted w-20">{stat.stat}</span>
+            <span className="text-[13px] text-sq-muted w-20">{stat.stat}</span>
             <div className="flex-1 h-2 bg-sq-hover rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-sq-accent to-sq-accent-light rounded-full transition-all"
                 style={{ width: `${Math.min((stat.value / Math.max(20, ...radarData.map((d) => d.value))) * 100, 100)}%` }}
               />
             </div>
-            <span className="text-xs text-sq-accent w-8 text-right font-semibold">{stat.value}</span>
+            <span className="text-[13px] text-sq-accent w-8 text-right font-semibold">{stat.value}</span>
           </div>
         ))}
       </div>
 
       {/* Insights */}
       <div className="sq-panel p-5 space-y-2">
-        <h2 className="font-semibold text-sm text-sq-text">System Analysis</h2>
-        <p className="text-xs text-sq-muted">
+        <h2 className="font-semibold text-[15px] text-sq-text">System Analysis</h2>
+        <p className="text-[14px] text-sq-muted">
           Strongest: <span className="text-sq-green font-medium">{strongestStat.stat}</span> ({strongestStat.value} pts)
         </p>
-        <p className="text-xs text-sq-muted">
+        <p className="text-[14px] text-sq-muted">
           Weakest: <span className="text-red-500 font-medium">{weakestStat.stat}</span> ({weakestStat.value} pts)
         </p>
-        <p className="text-xs text-sq-muted">
+        <p className="text-[14px] text-sq-muted">
           Best streak: <span className="text-orange-500 font-medium">{hunter.bestStreak} days</span>
         </p>
-        <p className="text-xs text-sq-muted">
+        <p className="text-[14px] text-sq-muted">
           XP Progress: <span className="text-sq-accent font-medium">{hunter.xp.toLocaleString()} / {hunter.xpToNext.toLocaleString()}</span>{" "}
           ({Math.round((hunter.xp / hunter.xpToNext) * 100)}%)
         </p>

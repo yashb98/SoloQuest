@@ -235,23 +235,67 @@ async function main() {
 
   // --- Rewards (Step 7) ---
   const rewards = [
-    // Tier 1 (E-Rank)
-    { title: "Favorite coffee + pastry", tier: "E", costGold: 150, realCost: 15.0, category: "treat" },
+    // ===== Tier E (E-Rank: 50-300 Gold) =====
+    { title: "Favorite coffee + pastry", tier: "E", costGold: 50, realCost: 5.0, category: "treat" },
+    { title: "Bubble tea / smoothie", tier: "E", costGold: 80, realCost: 8.0, category: "treat" },
+    { title: "New stickers or pins", tier: "E", costGold: 100, realCost: 10.0, category: "personal" },
+    { title: "Movie night (theater)", tier: "E", costGold: 150, realCost: 15.0, category: "entertainment" },
     { title: "New book (physical or Kindle)", tier: "E", costGold: 200, realCost: 20.0, category: "learning" },
-    { title: "Movie night (theater)", tier: "E", costGold: 250, realCost: 25.0, category: "entertainment" },
-    // Tier 2 (C-Rank)
-    { title: "New sneakers or clothing item", tier: "C", costGold: 500, realCost: 50.0, category: "personal" },
-    { title: "Nice restaurant dinner", tier: "C", costGold: 800, realCost: 80.0, category: "treat" },
-    { title: "Wireless earbuds / accessory", tier: "C", costGold: 1200, realCost: 120.0, category: "gadget" },
-    // Tier 3 (A-Rank)
-    { title: "Weekend getaway (nearby city)", tier: "A", costGold: 2500, realCost: 250.0, category: "travel" },
-    { title: "Online bootcamp / course", tier: "A", costGold: 3000, realCost: 300.0, category: "learning" },
-    { title: "Mechanical keyboard / monitor", tier: "A", costGold: 4000, realCost: 400.0, category: "gadget" },
-    // Tier 4 (S-Rank)
+    { title: "Spotify / YouTube Premium (1 month)", tier: "E", costGold: 120, realCost: 12.0, category: "entertainment" },
+    { title: "Phone case or accessories", tier: "E", costGold: 150, realCost: 15.0, category: "gadget" },
+    { title: "Ice cream or dessert outing", tier: "E", costGold: 80, realCost: 8.0, category: "treat" },
+    { title: "Plant for your desk", tier: "E", costGold: 100, realCost: 10.0, category: "personal" },
+    { title: "Nice notebook or journal", tier: "E", costGold: 120, realCost: 12.0, category: "personal" },
+
+    // ===== Tier D (D-Rank: 300-800 Gold) =====
+    { title: "New t-shirt or hoodie", tier: "D", costGold: 300, realCost: 30.0, category: "personal" },
+    { title: "Udemy / Skillshare course", tier: "D", costGold: 350, realCost: 35.0, category: "learning" },
+    { title: "Board game or card game", tier: "D", costGold: 300, realCost: 30.0, category: "entertainment" },
+    { title: "Nice restaurant lunch", tier: "D", costGold: 400, realCost: 40.0, category: "treat" },
+    { title: "Gym accessory (bands, mat, grips)", tier: "D", costGold: 350, realCost: 35.0, category: "fitness" },
+    { title: "Video game (on sale)", tier: "D", costGold: 500, realCost: 50.0, category: "entertainment" },
+    { title: "Desk lamp or organizer", tier: "D", costGold: 400, realCost: 40.0, category: "gadget" },
+    { title: "Day at a spa or massage", tier: "D", costGold: 600, realCost: 60.0, category: "treat" },
+    { title: "Cloud hosting credits (3 months)", tier: "D", costGold: 500, realCost: 50.0, category: "learning" },
+    { title: "Subscription box (1 month)", tier: "D", costGold: 400, realCost: 40.0, category: "personal" },
+
+    // ===== Tier C (C-Rank: 800-1500 Gold) =====
+    { title: "New sneakers or shoes", tier: "C", costGold: 800, realCost: 80.0, category: "personal" },
+    { title: "Nice restaurant dinner (fancy)", tier: "C", costGold: 1000, realCost: 100.0, category: "treat" },
+    { title: "Wireless earbuds", tier: "C", costGold: 1200, realCost: 120.0, category: "gadget" },
+    { title: "Backpack or messenger bag", tier: "C", costGold: 800, realCost: 80.0, category: "personal" },
+    { title: "Annual app subscription", tier: "C", costGold: 1000, realCost: 100.0, category: "learning" },
+    { title: "Concert or event tickets", tier: "C", costGold: 1200, realCost: 120.0, category: "entertainment" },
+    { title: "Standing desk mat / footrest", tier: "C", costGold: 800, realCost: 80.0, category: "gadget" },
+    { title: "Premium headphones (wired)", tier: "C", costGold: 1500, realCost: 150.0, category: "gadget" },
+    { title: "Fitness tracker / smart band", tier: "C", costGold: 1200, realCost: 120.0, category: "fitness" },
+    { title: "Weekend cooking class", tier: "C", costGold: 1000, realCost: 100.0, category: "learning" },
+
+    // ===== Tier B (B-Rank: 1500-3000 Gold) =====
+    { title: "Smartwatch", tier: "B", costGold: 2000, realCost: 200.0, category: "gadget" },
+    { title: "Weekend getaway (nearby city)", tier: "B", costGold: 2500, realCost: 250.0, category: "travel" },
+    { title: "Online bootcamp / course (premium)", tier: "B", costGold: 3000, realCost: 300.0, category: "learning" },
+    { title: "Noise-cancelling headphones", tier: "B", costGold: 2500, realCost: 250.0, category: "gadget" },
+    { title: "Designer clothing item", tier: "B", costGold: 2000, realCost: 200.0, category: "personal" },
+    { title: "Ergonomic office chair", tier: "B", costGold: 3000, realCost: 300.0, category: "gadget" },
+    { title: "Conference ticket", tier: "B", costGold: 2500, realCost: 250.0, category: "learning" },
+    { title: "Gym membership (3 months)", tier: "B", costGold: 2000, realCost: 200.0, category: "fitness" },
+
+    // ===== Tier A (A-Rank: 3000-6000 Gold) =====
+    { title: "Mechanical keyboard", tier: "A", costGold: 4000, realCost: 400.0, category: "gadget" },
+    { title: "27\" monitor upgrade", tier: "A", costGold: 5000, realCost: 500.0, category: "gadget" },
+    { title: "Drone or action camera", tier: "A", costGold: 5000, realCost: 500.0, category: "gadget" },
+    { title: "Adventure trip (trekking, rafting)", tier: "A", costGold: 4000, realCost: 400.0, category: "travel" },
+    { title: "Annual gym membership", tier: "A", costGold: 5000, realCost: 500.0, category: "fitness" },
+    { title: "Custom artwork or print", tier: "A", costGold: 3500, realCost: 350.0, category: "personal" },
+
+    // ===== Tier S (S-Rank: 6000+ Gold) =====
     { title: "Gaming console / tablet", tier: "S", costGold: 6000, realCost: 600.0, category: "gadget" },
     { title: "New laptop / workstation", tier: "S", costGold: 12000, realCost: 1200.0, category: "gadget" },
-    // Tier 5 (National)
     { title: "International flight + 3 nights", tier: "S", costGold: 20000, realCost: 2000.0, category: "travel" },
+    { title: "High-end camera (mirrorless)", tier: "S", costGold: 15000, realCost: 1500.0, category: "gadget" },
+    { title: "Full home office setup", tier: "S", costGold: 25000, realCost: 2500.0, category: "gadget" },
+    { title: "Luxury watch", tier: "S", costGold: 30000, realCost: 3000.0, category: "personal" },
   ];
 
   for (const reward of rewards) {

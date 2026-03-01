@@ -152,10 +152,10 @@ export default function CertsPage() {
           <motion.div key={cert.id} layout className="sq-panel p-4 space-y-3 border border-sq-blue/30">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-sm text-sq-text">{cert.certName}</h3>
-                <span className="text-[10px] text-sq-muted">{cert.provider}</span>
+                <h3 className="font-bold text-[15px] text-sq-text">{cert.certName}</h3>
+                <span className="text-[13px] text-sq-muted">{cert.provider}</span>
               </div>
-              <span className="text-xs text-sq-blue">Week {cert.currentWeek}/{cert.totalWeeks}</span>
+              <span className="text-[14px] text-sq-blue font-medium">Week {cert.currentWeek}/{cert.totalWeeks}</span>
             </div>
 
             {/* Progress bar */}
@@ -163,7 +163,7 @@ export default function CertsPage() {
               <div className="h-full bg-sq-blue rounded-full transition-all" style={{ width: `${progress}%` }} />
             </div>
 
-            <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-3 text-[13px]">
               <span className="text-sq-muted">{cert.weeklyHours}h/week</span>
               <span className="text-sq-gold">{cert.goldBonus}G on pass</span>
               {cert.targetExamDate && (

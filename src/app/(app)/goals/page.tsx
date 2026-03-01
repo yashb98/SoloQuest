@@ -144,7 +144,7 @@ export default function GoalsPage() {
       {/* Active Goals */}
       {activeGoals.length > 0 && (
         <div className="space-y-3">
-          <h2 className="font-semibold text-sm text-sq-text">ACTIVE GOALS</h2>
+          <h2 className="font-semibold text-[15px] text-sq-text">ACTIVE GOALS</h2>
           {activeGoals.map((goal) => {
             const cfg = typeConfig[goal.type] || typeConfig.sprint;
             return (
@@ -152,16 +152,16 @@ export default function GoalsPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold ${cfg.color}`}>{cfg.label}</span>
+                      <span className={`text-[12px] font-bold ${cfg.color}`}>{cfg.label}</span>
                       <Target className={`w-3 h-3 ${cfg.color}`} />
                     </div>
-                    <h3 className="font-bold text-sm text-sq-text mt-1">{goal.title}</h3>
-                    {goal.description && <p className="text-[11px] text-sq-muted mt-1">{goal.description}</p>}
+                    <h3 className="font-bold text-[15px] text-sq-text mt-1">{goal.title}</h3>
+                    {goal.description && <p className="text-[13px] text-sq-muted mt-1">{goal.description}</p>}
                     <div className="flex items-center gap-3 mt-2">
-                      <span className="text-[10px] text-sq-gold">+{goal.xpReward} XP</span>
-                      <span className="text-[10px] text-sq-gold">+{goal.goldReward} G</span>
+                      <span className="text-[12px] text-sq-gold">+{goal.xpReward} XP</span>
+                      <span className="text-[12px] text-sq-gold">+{goal.goldReward} G</span>
                       {goal.targetDate && (
-                        <span className="text-[10px] text-sq-muted">
+                        <span className="text-[12px] text-sq-muted">
                           Due: {new Date(goal.targetDate).toLocaleDateString()}
                         </span>
                       )}
@@ -191,7 +191,7 @@ export default function GoalsPage() {
       {/* Completed Goals */}
       {completedGoals.length > 0 && (
         <div className="space-y-3">
-          <h2 className="font-semibold text-sm text-sq-muted">COMPLETED</h2>
+          <h2 className="font-semibold text-[15px] text-sq-muted">COMPLETED</h2>
           {completedGoals.map((goal) => (
             <div key={goal.id} className="sq-panel p-3 opacity-50">
               <div className="flex items-center gap-2">

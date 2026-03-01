@@ -12,6 +12,7 @@ interface Quest {
   xpBase: number;
   goldBase: number;
   statTarget: string;
+  statGain: number;
   isCompleted: boolean;
 }
 
@@ -79,6 +80,7 @@ export default function QuestsPage() {
       quests={quests}
       onComplete={handleComplete}
       onUndo={handleUndo}
+      onQuestCreated={fetchQuests}
       loadingQuestId={loadingQuestId}
     />
   );
