@@ -8,6 +8,7 @@ interface Quest {
   title: string;
   category: string;
   difficulty: string;
+  tier: string;
   xpBase: number;
   goldBase: number;
   statTarget: string;

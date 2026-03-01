@@ -1,5 +1,5 @@
-// Solo Quest — Full Database Schema
-// All models as specified in the Master Build Prompt
+// Solo Quest — Full Gamification Blueprint Schema
+// All 11 steps from the blueprint integrated
 
 generator client {
   provider = "prisma-client"
@@ -13,20 +13,33 @@ datasource db {
 model Hunter {
   id               Int      @id @default(1)
   hunterName       String   @default("Yash")
+  class            String   @default("none") // warrior|scholar|rogue|paladin|none
+  title            String   @default("Newcomer")
   rank             String   @default("E")
   level            Int      @default(1)
   xp               Int      @default(0)
-  xpToNext         Int      @default(800)
+  xpToNext         Int      @default(115)
   gold             Int      @default(0)
   streak           Int      @default(0)
+  bestStreak       Int      @default(0)
+  streakShields    Int      @default(0) // max 3
+  streakFreezes    Int      @default(0) // max 2/month
+  lastGracePeriod  String?
   lastStreakDate   String?
   lastBriefingDate String?
   wakeUpTime       String   @default("06:30")
-  discipline       Int      @default(0)
+  statPoints       Int      @default(0)
+  // 6 Core Stats (Blueprint Step 3)
   vitality         Int      @default(0)
-  intelligence     Int      @default(0)
+  intel            Int      @default(0)
   hustle           Int      @default(0)
   wealth           Int      @default(0)
+  focus            Int      @default(0)
+  agentIQ          Int      @default(0)
+  // Financial
+  goldToMoneyRatio Float    @default(0.10)
+  // Prestige
+  prestigeCount    Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -36,14 +49,17 @@ model Quest {
   title          String
   category       String
   difficulty     String
+  tier           String       @default("daily") // daily|weekly|custom
   xpBase         Int
   goldBase       Int
   statTarget     String
+  statGain       Int          @default(1)
   isDaily        Boolean      @default(true)
   isActive       Boolean      @default(true)
   isCompleted    Boolean      @default(false)
   completedAt    DateTime?
   unlocksAtLevel Int          @default(1)
+  dungeonId      Int?
   createdAt      DateTime     @default(now())
   completions    Completion[]
 }
@@ -59,28 +75,36 @@ model Completion {
 }
 
 model Reward {
-  id         Int       @id @default(autoincrement())
-  title      String
-  tier       String
-  costGold   Int
-  realCost   Float
-  isUnlocked Boolean   @default(false)
-  isRedeemed Boolean   @default(false)
-  redeemedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id           Int       @id @default(autoincrement())
+  title        String
+  tier         String
+  costGold     Int
+  realCost     Float
+  category     String    @default("general")
+  isCustom     Boolean   @default(false)
+  isRepeatable Boolean   @default(false)
+  isUnlocked   Boolean   @default(false)
+  isRedeemed   Boolean   @default(false)
+  redeemedAt   DateTime?
+  createdAt    DateTime  @default(now())
 }
 
 model Dungeon {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   title       String
   description String
-  questIds    String
-  xpReward    Int
-  goldReward  Int
-  startDate   DateTime
-  endDate     DateTime
-  isCompleted Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  objectives  String
+  bonusXP     Int
+  bonusGold   Int
+  statReward  String
+  statAmount  Int       @default(6)
+  isActive    Boolean   @default(false)
+  isCompleted Boolean   @default(false)
+  isFailed    Boolean   @default(false)
+  activatedAt DateTime?
+  deadline    DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
 }
 
 model Exam {
@@ -119,4 +143,72 @@ model SpendLog {
   amount      Float
   description String
   spentAt     DateTime @default(now())
+}
+
+model Achievement {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String
+  category    String
+  requirement String
+  checkType   String
+  checkValue  Int       @default(0)
+  xpReward    Int       @default(0)
+  goldReward  Int       @default(0)
+  titleReward String?
+  rarity      String    @default("Common")
+  isUnlocked  Boolean   @default(false)
+  unlockedAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Goal {
+  id          Int       @id @default(autoincrement())
+  type        String
+  title       String
+  description String    @default("")
+  targetDate  DateTime?
+  xpReward    Int       @default(200)
+  goldReward  Int       @default(100)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Application {
+  id            Int       @id @default(autoincrement())
+  company       String
+  role          String
+  link          String    @default("")
+  status        String    @default("discovered")
+  salaryRange   String?
+  contactPerson String?
+  notes         String?
+  resumeVersion String?
+  dateApplied   DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+}
+
+model CertRoadmap {
+  id             Int       @id @default(autoincrement())
+  certName       String
+  provider       String
+  startDate      DateTime  @default(now())
+  targetExamDate DateTime?
+  totalWeeks     Int       @default(8)
+  currentWeek    Int       @default(1)
+  weeklyHours    Int       @default(10)
+  goldBonus      Int       @default(2000)
+  isPassed       Boolean   @default(false)
+  passedAt       DateTime?
+  createdAt      DateTime  @default(now())
+}
+
+model MentorLog {
+  id        Int      @id @default(autoincrement())
+  prompt    String
+  response  String
+  feature   String   @default("chat")
+  createdAt DateTime @default(now())
 }

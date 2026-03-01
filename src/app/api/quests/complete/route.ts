@@ -1,7 +1,7 @@
-// api/quests/complete/route.ts — POST complete quest + XP award + level-up
+// api/quests/complete/route.ts — Complete quest + XP + level-up + stats + achievements
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { effectiveXP } from "@/lib/xp";
+import { effectiveXP, effectiveGold } from "@/lib/xp";
 import { processXPGain } from "@/lib/leveling";
 
 export async function POST(req: NextRequest) {
@@ -12,16 +12,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "questId required" }, { status: 400 });
   }
 
-  // Fetch quest and hunter
   const quest = await prisma.quest.findUnique({ where: { id: questId } });
   if (!quest) {
     return NextResponse.json({ error: "Quest not found" }, { status: 404 });
   }
   if (quest.isCompleted) {
-    return NextResponse.json(
-      { error: "Quest already completed today" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Quest already completed" }, { status: 400 });
   }
 
   const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
@@ -29,34 +25,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Hunter not found" }, { status: 404 });
   }
 
-  // Calculate effective XP
   const xpEarned = effectiveXP(
-    quest.xpBase,
-    hunter.level,
-    hunter.streak,
-    false
+    quest.xpBase, hunter.level, hunter.streak,
+    hunter.class, quest.statTarget, false
   );
-  const goldEarned = quest.goldBase;
+  const goldEarned = effectiveGold(quest.goldBase, hunter.hustle);
 
-  // Process level-up
-  const levelResult = processXPGain(
-    hunter.xp,
-    hunter.level,
-    hunter.xpToNext,
-    xpEarned
-  );
+  const levelResult = processXPGain(hunter.xp, hunter.level, hunter.xpToNext, xpEarned);
 
-  // Build stat increment
+  const validStats = ["vitality", "intel", "hustle", "wealth", "focus", "agentIQ"];
   const statIncrement: Record<string, number> = {};
-  if (
-    ["discipline", "vitality", "intelligence", "hustle", "wealth"].includes(
-      quest.statTarget
-    )
-  ) {
-    statIncrement[quest.statTarget] = 1;
+  if (validStats.includes(quest.statTarget)) {
+    statIncrement[quest.statTarget] = quest.statGain;
   }
 
-  // Update hunter
   await prisma.hunter.update({
     where: { id: 1 },
     data: {
@@ -64,45 +46,34 @@ export async function POST(req: NextRequest) {
       level: levelResult.newLevel,
       rank: levelResult.newRank,
       xpToNext: levelResult.newXPToNext,
-      gold: { increment: goldEarned },
+      gold: { increment: goldEarned + levelResult.goldBonus },
+      statPoints: { increment: levelResult.statPointsEarned },
       ...statIncrement,
     },
   });
 
-  // Mark quest completed
   await prisma.quest.update({
     where: { id: questId },
-    data: {
-      isCompleted: true,
-      completedAt: new Date(),
-    },
+    data: { isCompleted: true, completedAt: new Date() },
   });
 
-  // Log completion
   await prisma.completion.create({
-    data: {
-      questId,
-      xpEarned,
-      goldEarned,
-      notes: notes || null,
-    },
+    data: { questId, xpEarned, goldEarned, notes: notes || null },
   });
 
   return NextResponse.json({
     success: true,
     xpEarned,
     goldEarned,
+    statGain: quest.statGain,
+    statTarget: quest.statTarget,
     didLevelUp: levelResult.didLevelUp,
+    levelsGained: levelResult.levelsGained,
     newLevel: levelResult.newLevel,
     newRank: levelResult.newRank,
     isGateLocked: levelResult.isGateLocked,
     gateLevel: levelResult.gateLevel,
-    hunter: {
-      level: levelResult.newLevel,
-      rank: levelResult.newRank,
-      xp: levelResult.newXP,
-      xpToNext: levelResult.newXPToNext,
-      gold: hunter.gold + goldEarned,
-    },
+    statPointsEarned: levelResult.statPointsEarned,
+    levelUpGoldBonus: levelResult.goldBonus,
   });
 }

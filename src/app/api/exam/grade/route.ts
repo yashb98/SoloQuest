@@ -20,10 +20,7 @@ export async function POST(req: NextRequest) {
   const { examId, answers } = body as { examId: number; answers: Answer[] };
 
   if (!examId || !answers?.length) {
-    return NextResponse.json(
-      { error: "examId and answers required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "examId and answers required" }, { status: 400 });
   }
 
   const exam = await prisma.exam.findUnique({ where: { id: examId } });
@@ -31,7 +28,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Exam not found" }, { status: 404 });
   }
 
-  // Grade each answer
   const results = [];
   let totalMarks = 0;
   let totalAvailable = 0;
@@ -49,7 +45,6 @@ export async function POST(req: NextRequest) {
       totalAvailable += ans.marks;
       results.push({ questionId: ans.questionId, ...grade });
     } catch {
-      // If grading fails for a question, give 0
       totalAvailable += ans.marks;
       results.push({
         questionId: ans.questionId,
@@ -64,34 +59,24 @@ export async function POST(req: NextRequest) {
   const passMark = exam.gateLevel <= 10 ? 60 : exam.gateLevel <= 30 ? 65 : 70;
   const passed = score >= passMark;
 
-  // Update exam record
   await prisma.exam.update({
     where: { id: examId },
     data: {
       score,
       passed,
       takenAt: new Date(),
-      nextAllowed: passed
-        ? null
-        : new Date(Date.now() + 48 * 60 * 60 * 1000), // 48hr cooldown
+      nextAllowed: passed ? null : new Date(Date.now() + 48 * 60 * 60 * 1000),
     },
   });
 
-  // If passed, award XP and level up past the gate
   if (passed) {
     const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
     if (hunter) {
-      const xpAward = xpForLevel(exam.gateLevel) * 0.5; // 50% of level XP as exam reward
-      const levelResult = processXPGain(
-        hunter.xp,
-        hunter.level,
-        hunter.xpToNext,
-        Math.floor(xpAward)
-      );
+      const xpAward = xpForLevel(exam.gateLevel) * 0.5;
+      const levelResult = processXPGain(hunter.xp, hunter.level, hunter.xpToNext, Math.floor(xpAward));
 
-      // Force level past the gate
       const newLevel = Math.max(levelResult.newLevel, exam.gateLevel);
-      const newXPToNext = xpForLevel(newLevel);
+      const newXPToNext = xpForLevel(newLevel + 1);
 
       await prisma.hunter.update({
         where: { id: 1 },
@@ -100,7 +85,9 @@ export async function POST(req: NextRequest) {
           rank: levelResult.newRank,
           xp: levelResult.newXP,
           xpToNext: newXPToNext,
-          intelligence: { increment: 5 },
+          intel: { increment: 5 },
+          statPoints: { increment: levelResult.statPointsEarned },
+          gold: { increment: levelResult.goldBonus },
         },
       });
 
@@ -112,11 +99,7 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({
-    examId,
-    score,
-    passMark,
-    passed,
-    results,
+    examId, score, passMark, passed, results,
     nextAllowed: passed ? null : new Date(Date.now() + 48 * 60 * 60 * 1000),
   });
 }

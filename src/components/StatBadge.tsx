@@ -14,6 +14,7 @@ const rankColors: Record<string, string> = {
   B: "from-purple-500 to-purple-600",
   A: "from-orange-500 to-orange-600",
   S: "from-sq-gold to-yellow-500",
+  National: "from-red-600 via-sq-gold to-red-600",
 };
 
 const rankGlows: Record<string, string> = {
@@ -23,6 +24,7 @@ const rankGlows: Record<string, string> = {
   B: "shadow-[0_0_12px_rgba(168,85,247,0.4)]",
   A: "shadow-[0_0_15px_rgba(249,115,22,0.4)]",
   S: "shadow-sq-gold-glow",
+  National: "shadow-[0_0_20px_rgba(239,68,68,0.5)]",
 };
 
 export default function StatBadge({ rank, level }: StatBadgeProps) {
