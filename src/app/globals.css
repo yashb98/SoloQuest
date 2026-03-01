@@ -1,0 +1,58 @@
+@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sq-bg: #0A0E1A;
+  --sq-panel: #111827;
+  --sq-border: #1E3A5F;
+  --sq-gold: #E2B04A;
+  --sq-blue: #3B82F6;
+  --sq-text: #E2E8F0;
+  --sq-muted: #94A3B8;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sq-border) var(--sq-bg);
+}
+
+body {
+  color: var(--sq-text);
+  background: var(--sq-bg);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Panel base style */
+@layer components {
+  .sq-panel {
+    @apply bg-sq-panel border border-sq-border rounded-lg shadow-sq-glow;
+  }
+
+  .sq-button-gold {
+    @apply bg-sq-gold text-sq-bg font-display font-bold px-4 py-2 rounded-md
+           hover:shadow-sq-gold-glow transition-all duration-200;
+  }
+
+  .sq-button-blue {
+    @apply bg-sq-blue text-white font-display font-bold px-4 py-2 rounded-md
+           hover:opacity-90 transition-all duration-200;
+  }
+
+  /* Difficulty badges */
+  .quest-normal {
+    @apply text-sq-green border-sq-green;
+  }
+
+  .quest-hard {
+    @apply text-sq-blue border-sq-blue;
+  }
+
+  .quest-legendary {
+    @apply text-sq-purple border-sq-purple shadow-sq-purple-glow;
+  }
+}
