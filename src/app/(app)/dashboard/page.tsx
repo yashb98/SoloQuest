@@ -9,6 +9,7 @@ interface Quest {
   title: string;
   category: string;
   difficulty: string;
+  tier: string;
   xpBase: number;
   goldBase: number;
   statTarget: string;
@@ -20,6 +21,9 @@ interface LevelUpData {
   newRank: string;
   isGateLocked: boolean;
   gateLevel: number | null;
+  levelsGained: number;
+  statPointsEarned: number;
+  goldBonus: number;
 }
 
 export default function DashboardPage() {
@@ -66,6 +70,9 @@ export default function DashboardPage() {
             newRank: data.newRank,
             isGateLocked: data.isGateLocked,
             gateLevel: data.gateLevel,
+            levelsGained: data.levelsGained ?? 1,
+            statPointsEarned: data.statPointsEarned ?? 0,
+            goldBonus: data.levelUpGoldBonus ?? 0,
           });
         }
       }
@@ -106,6 +113,9 @@ export default function DashboardPage() {
         newRank={levelUpData?.newRank ?? "E"}
         isGateLocked={levelUpData?.isGateLocked ?? false}
         gateLevel={levelUpData?.gateLevel ?? null}
+        levelsGained={levelUpData?.levelsGained}
+        statPointsEarned={levelUpData?.statPointsEarned}
+        goldBonus={levelUpData?.goldBonus}
       />
     </div>
   );

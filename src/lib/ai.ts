@@ -10,12 +10,13 @@ const MODEL = "claude-sonnet-4-6";
 // --- Morning Briefing ---
 interface BriefingContext {
   hunterName: string;
+  class: string;
   rank: string;
   level: number;
   streak: number;
   weakestStat: string;
   weakestStatValue: number;
-  hasShift: boolean;
+  stats: Record<string, number>;
   questTitles: string[];
 }
 
@@ -24,9 +25,9 @@ export async function generateBriefing(ctx: BriefingContext): Promise<string> {
 Be concise — under 80 words total. Never generic.
 Reference the hunter's actual stats and today's specific quests.
 
-Hunter: ${ctx.hunterName} | Rank: ${ctx.rank}-${ctx.level} | Streak: ${ctx.streak} days
+Hunter: ${ctx.hunterName} | Class: ${ctx.class} | Rank: ${ctx.rank}-${ctx.level} | Streak: ${ctx.streak} days
+Stats: VIT=${ctx.stats.vitality} INT=${ctx.stats.intel} HUS=${ctx.stats.hustle} WLT=${ctx.stats.wealth} FOC=${ctx.stats.focus} AIQ=${ctx.stats.agentIQ}
 Weakest stat: ${ctx.weakestStat} (${ctx.weakestStatValue} points)
-Work shift today: ${ctx.hasShift ? "Yes" : "No"}
 Today's top quests: ${ctx.questTitles.join(", ")}
 
 Rules:
@@ -127,6 +128,48 @@ Be rigorous. Vague answers do not earn full marks.`;
   return block.type === "text" ? block.text : "";
 }
 
+// --- AI Mentor Chat (Step 10) ---
+interface MentorContext {
+  hunterName: string;
+  class: string;
+  rank: string;
+  level: number;
+  stats: Record<string, number>;
+  streak: number;
+  activeQuests: string[];
+  recentHistory: string[];
+  userMessage: string;
+}
+
+export async function mentorChat(ctx: MentorContext): Promise<string> {
+  const systemPrompt = `You are the AI Mentor in Solo Quest — a personal coach, study buddy, and accountability partner.
+You speak in a motivating, game-themed tone. Reference the user's stats, rank, and class.
+
+Hunter Context:
+- Name: ${ctx.hunterName} | Class: ${ctx.class} | Rank: ${ctx.rank}-${ctx.level}
+- Stats: VIT=${ctx.stats.vitality} INT=${ctx.stats.intel} HUS=${ctx.stats.hustle} WLT=${ctx.stats.wealth} FOC=${ctx.stats.focus} AIQ=${ctx.stats.agentIQ}
+- Streak: ${ctx.streak} days
+- Active quests: ${ctx.activeQuests.join(", ") || "none"}
+- Recent completions: ${ctx.recentHistory.join(", ") || "none"}
+
+Guidelines:
+- Be concise (under 150 words)
+- Give actionable advice, not vague motivation
+- Reference specific stats when relevant
+- Suggest specific quests or dungeons when appropriate
+- If a stat is lagging, suggest ways to improve it`;
+
+  const message = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 400,
+    system: systemPrompt,
+    messages: [{ role: "user", content: ctx.userMessage }],
+  });
+
+  const block = message.content[0];
+  return block.type === "text" ? block.text : "";
+}
+
 // --- Quest Chain Generation ---
 interface QuestGenContext {
   hunterName: string;
@@ -147,16 +190,16 @@ Goal: "${ctx.goal}"
 Generate 5-7 quests. Each quest:
 {
   "title": "specific and actionable — not generic",
-  "category": "job_search|interview_prep|health|food|part_time|learning|mental|finance",
+  "category": "health|learning|jobs|finance|focus|agentiq|food|mental",
   "difficulty": "normal|hard|legendary",
   "xpBase": number,
   "goldBase": number,
-  "statTarget": "discipline|vitality|intelligence|hustle|wealth",
+  "statTarget": "vitality|intel|hustle|wealth|focus|agentIQ",
   "dueInDays": number
 }
 
 Scale difficulty to level ${ctx.level}. If goal is career-related, bias toward
-interview_prep and job_search. Never use vague titles.`;
+jobs. Never use vague titles.`;
 
   const message = await anthropic.messages.create({
     model: MODEL,

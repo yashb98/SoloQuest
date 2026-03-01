@@ -10,6 +10,9 @@ interface LevelUpModalProps {
   newRank: string;
   isGateLocked: boolean;
   gateLevel: number | null;
+  levelsGained?: number;
+  statPointsEarned?: number;
+  goldBonus?: number;
 }
 
 export default function LevelUpModal({
@@ -19,6 +22,9 @@ export default function LevelUpModal({
   newRank,
   isGateLocked,
   gateLevel,
+  levelsGained = 1,
+  statPointsEarned = 0,
+  goldBonus = 0,
 }: LevelUpModalProps) {
   return (
     <AnimatePresence>
@@ -71,7 +77,7 @@ export default function LevelUpModal({
               className="space-y-2"
             >
               <p className="font-mono text-lg text-sq-text">
-                You have reached{" "}
+                {levelsGained > 1 ? `+${levelsGained} Levels! ` : ""}You have reached{" "}
                 <span className="text-sq-gold font-bold">
                   {newRank}-{newLevel}
                 </span>
@@ -79,6 +85,20 @@ export default function LevelUpModal({
               <p className="font-mono text-sm text-sq-muted">
                 The System acknowledges your progress.
               </p>
+              {(statPointsEarned > 0 || goldBonus > 0) && (
+                <div className="mt-3 space-y-1">
+                  {statPointsEarned > 0 && (
+                    <p className="font-mono text-xs text-sq-blue">
+                      +{statPointsEarned} Stat Point{statPointsEarned > 1 ? "s" : ""} earned
+                    </p>
+                  )}
+                  {goldBonus > 0 && (
+                    <p className="font-mono text-xs text-sq-gold">
+                      +{goldBonus} Gold bonus
+                    </p>
+                  )}
+                </div>
+              )}
             </motion.div>
 
             {isGateLocked && gateLevel && (

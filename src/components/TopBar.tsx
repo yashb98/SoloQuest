@@ -7,13 +7,22 @@ import StatBadge from "./StatBadge";
 
 interface HunterData {
   hunterName: string;
+  class: string;
   rank: string;
   level: number;
   xp: number;
   xpToNext: number;
   gold: number;
   streak: number;
+  title: string;
 }
+
+const classColors: Record<string, string> = {
+  warrior: "text-red-400",
+  scholar: "text-blue-400",
+  rogue: "text-amber-400",
+  paladin: "text-emerald-400",
+};
 
 export default function TopBar() {
   const [hunter, setHunter] = useState<HunterData | null>(null);
@@ -38,31 +47,26 @@ export default function TopBar() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Shield className="w-5 h-5 text-sq-gold" />
-          <span className="font-display font-bold text-lg text-sq-text">
-            {hunter.hunterName}
-          </span>
+          <span className="font-display font-bold text-lg text-sq-text">{hunter.hunterName}</span>
           <StatBadge rank={hunter.rank} level={hunter.level} />
+          {hunter.class !== "none" && (
+            <span className={`font-mono text-[10px] ${classColors[hunter.class] || "text-sq-muted"}`}>
+              {hunter.class.charAt(0).toUpperCase() + hunter.class.slice(1)}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
             <Flame className="w-4 h-4 text-orange-500" />
-            <span className="font-mono text-sm text-sq-muted">
-              {hunter.streak}d
-            </span>
+            <span className="font-mono text-sm text-sq-muted">{hunter.streak}d</span>
           </div>
           <div className="flex items-center gap-1">
             <Coins className="w-4 h-4 text-sq-gold" />
-            <span className="font-mono text-sm text-sq-gold">
-              {hunter.gold.toLocaleString()}
-            </span>
+            <span className="font-mono text-sm text-sq-gold">{hunter.gold.toLocaleString()}</span>
           </div>
         </div>
       </div>
-      <XPBar
-        currentXP={hunter.xp}
-        xpToNext={hunter.xpToNext}
-        level={hunter.level}
-      />
+      <XPBar currentXP={hunter.xp} xpToNext={hunter.xpToNext} level={hunter.level} />
     </div>
   );
 }
