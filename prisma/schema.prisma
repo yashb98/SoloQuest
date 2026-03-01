@@ -1,0 +1,122 @@
+// Solo Quest — Full Database Schema
+// All models as specified in the Master Build Prompt
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Hunter {
+  id               Int      @id @default(1)
+  hunterName       String   @default("Yash")
+  rank             String   @default("E")
+  level            Int      @default(1)
+  xp               Int      @default(0)
+  xpToNext         Int      @default(800)
+  gold             Int      @default(0)
+  streak           Int      @default(0)
+  lastStreakDate   String?
+  lastBriefingDate String?
+  wakeUpTime       String   @default("06:30")
+  discipline       Int      @default(0)
+  vitality         Int      @default(0)
+  intelligence     Int      @default(0)
+  hustle           Int      @default(0)
+  wealth           Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Quest {
+  id             Int          @id @default(autoincrement())
+  title          String
+  category       String
+  difficulty     String
+  xpBase         Int
+  goldBase       Int
+  statTarget     String
+  isDaily        Boolean      @default(true)
+  isActive       Boolean      @default(true)
+  isCompleted    Boolean      @default(false)
+  completedAt    DateTime?
+  unlocksAtLevel Int          @default(1)
+  createdAt      DateTime     @default(now())
+  completions    Completion[]
+}
+
+model Completion {
+  id          Int      @id @default(autoincrement())
+  questId     Int
+  quest       Quest    @relation(fields: [questId], references: [id])
+  xpEarned    Int
+  goldEarned  Int
+  completedAt DateTime @default(now())
+  notes       String?
+}
+
+model Reward {
+  id         Int       @id @default(autoincrement())
+  title      String
+  tier       String
+  costGold   Int
+  realCost   Float
+  isUnlocked Boolean   @default(false)
+  isRedeemed Boolean   @default(false)
+  redeemedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model Dungeon {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  questIds    String
+  xpReward    Int
+  goldReward  Int
+  startDate   DateTime
+  endDate     DateTime
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Exam {
+  id            Int       @id @default(autoincrement())
+  gateLevel     Int
+  type          String
+  questionsJson String
+  score         Int?
+  passed        Boolean   @default(false)
+  attemptNum    Int       @default(1)
+  xpAwarded     Int       @default(0)
+  takenAt       DateTime?
+  nextAllowed   DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model Briefing {
+  id        Int      @id @default(autoincrement())
+  content   String
+  date      String
+  createdAt DateTime @default(now())
+}
+
+model SavingsLog {
+  id       Int      @id @default(autoincrement())
+  pot      String
+  amount   Float
+  action   String
+  note     String?
+  loggedAt DateTime @default(now())
+}
+
+model SpendLog {
+  id          Int      @id @default(autoincrement())
+  category    String
+  amount      Float
+  description String
+  spentAt     DateTime @default(now())
+}
