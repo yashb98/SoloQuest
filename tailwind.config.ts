@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,21 +10,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        "sq-bg": "#FAF9F6",
-        "sq-panel": "#FFFFFF",
-        "sq-border": "#E8E4DE",
-        "sq-accent": "#C4653A",
-        "sq-accent-light": "#E08A5E",
+        "sq-bg": "var(--sq-bg)",
+        "sq-panel": "var(--sq-panel)",
+        "sq-border": "var(--sq-border)",
+        "sq-accent": "var(--sq-accent)",
+        "sq-accent-light": "var(--sq-accent-light)",
         "sq-gold": "#D4A017",
         "sq-blue": "#3B82F6",
-        "sq-text": "#1A1A1A",
-        "sq-muted": "#9C8E82",
-        "sq-subtle": "#6B5F56",
+        "sq-text": "var(--sq-text)",
+        "sq-muted": "var(--sq-muted)",
+        "sq-subtle": "var(--sq-subtle)",
         "sq-green": "#22C55E",
         "sq-purple": "#A855F7",
-        "sq-hover": "#F0EBE5",
-        "sq-warm": "#FFF8F0",
-        "sq-warm-border": "#F0E0D0",
+        "sq-hover": "var(--sq-hover)",
+        "sq-warm": "var(--sq-warm)",
+        "sq-warm-border": "var(--sq-warm-border)",
       },
       fontFamily: {
         sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],

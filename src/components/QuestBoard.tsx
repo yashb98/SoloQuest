@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, X, Sparkles, Loader2 } from "lucide-react";
+import { Plus, X, Sparkles, Loader2, Search } from "lucide-react";
 import QuestCard from "./QuestCard";
 
 interface Quest {
@@ -69,13 +69,18 @@ export default function QuestBoard({ quests, onComplete, onUndo, onQuestCreated,
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeTier, setActiveTier] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredQuests = useMemo(() => {
     let filtered = quests;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter((quest) => quest.title.toLowerCase().includes(q));
+    }
     if (activeCategory !== "all") filtered = filtered.filter((q) => q.category === activeCategory);
     if (activeTier !== "all") filtered = filtered.filter((q) => q.tier === activeTier);
     return filtered;
-  }, [quests, activeCategory, activeTier]);
+  }, [quests, activeCategory, activeTier, searchQuery]);
 
   const completedCount = quests.filter((q) => q.isCompleted).length;
 
@@ -94,6 +99,26 @@ export default function QuestBoard({ quests, onComplete, onUndo, onQuestCreated,
           <Plus className="w-4 h-4" />
           Add Quest
         </button>
+      </div>
+
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-sq-muted" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search quests..."
+          className="w-full pl-11 pr-4 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text placeholder:text-sq-muted/50 focus:outline-none focus:border-sq-accent transition-colors"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-sq-muted hover:text-sq-text hover:bg-sq-hover transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Tier filters */}

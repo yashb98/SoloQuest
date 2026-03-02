@@ -37,6 +37,13 @@ export async function GET() {
     take: 5,
   });
 
+  // Fetch active roadmap target role for career-aware briefings
+  let targetRole: string | undefined;
+  if (hunter.activeRoadmapId) {
+    const roadmap = await prisma.jobRoadmap.findUnique({ where: { id: hunter.activeRoadmapId } });
+    if (roadmap) targetRole = roadmap.targetRole;
+  }
+
   try {
     const briefingText = await generateBriefing({
       hunterName: hunter.hunterName,
@@ -48,6 +55,7 @@ export async function GET() {
       weakestStatValue: weakestEntry[1],
       stats,
       questTitles: quests.map((q) => q.title),
+      targetRole,
     });
 
     await prisma.briefing.create({ data: { content: briefingText, date: today } });

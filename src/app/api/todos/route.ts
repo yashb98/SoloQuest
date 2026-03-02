@@ -85,6 +85,22 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Update DailySnapshot for analytics when completing (not uncompleting)
+    if (!todo.isCompleted) {
+      const today = new Date().toISOString().split("T")[0];
+      const existingSnap = await prisma.dailySnapshot.findUnique({ where: { date: today } });
+      if (existingSnap) {
+        await prisma.dailySnapshot.update({
+          where: { date: today },
+          data: { todosCompleted: { increment: 1 } },
+        });
+      } else {
+        await prisma.dailySnapshot.create({
+          data: { date: today, todosCompleted: 1 },
+        });
+      }
+    }
+
     return NextResponse.json({ success: true, todo: updated });
   }
 

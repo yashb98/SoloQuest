@@ -5,6 +5,7 @@ import { motion, AnimatePresence, Reorder } from "framer-motion";
 import {
   Plus, Check, Trash2, ChevronLeft, ChevronRight, ArrowRightFromLine,
   X, CalendarDays, Pencil, GripVertical, Sparkles, ChevronDown, Save, Loader2,
+  RefreshCw, Repeat,
 } from "lucide-react";
 
 interface TodoItem {
@@ -75,6 +76,15 @@ export default function PlannerPage() {
   const [reorderDirty, setReorderDirty] = useState(false);
   const [reorderSaving, setReorderSaving] = useState(false);
 
+  // Recurring tasks
+  const [showRecurring, setShowRecurring] = useState(false);
+  interface RecurringTemplate { id: number; title: string; category: string; recurType: string; recurDays: string | null; }
+  const [recurringTemplates, setRecurringTemplates] = useState<RecurringTemplate[]>([]);
+  const [recurTitle, setRecurTitle] = useState("");
+  const [recurCategory, setRecurCategory] = useState("general");
+  const [recurType, setRecurType] = useState("daily");
+  const [recurDays, setRecurDays] = useState<string[]>([]);
+
   const editInputRef = useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
 
   const fetchTodos = useCallback(async (date?: string) => {
@@ -89,9 +99,24 @@ export default function PlannerPage() {
     setReorderDirty(false);
   }, [selectedDate]);
 
+  const fetchRecurring = useCallback(async () => {
+    const res = await fetch("/api/todos/recurring");
+    setRecurringTemplates(await res.json());
+  }, []);
+
+  // Generate today's recurring tasks on mount
+  useEffect(() => {
+    fetch("/api/todos/recurring", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "generate_today" }),
+    }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetchTodos();
-  }, [fetchTodos]);
+    fetchRecurring();
+  }, [fetchTodos, fetchRecurring]);
 
   const refreshForDate = (date: string) => {
     setSelectedDate(date);
@@ -253,6 +278,34 @@ export default function PlannerPage() {
     fetchTodos(selectedDate);
   };
 
+  // --- Recurring Tasks ---
+  const handleCreateRecurring = async () => {
+    if (!recurTitle.trim()) return;
+    await fetch("/api/todos/recurring", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: recurTitle.trim(),
+        category: recurCategory,
+        recurType: recurType,
+        recurDays: recurType === "custom" ? recurDays : undefined,
+      }),
+    });
+    setRecurTitle("");
+    setRecurType("daily");
+    setRecurDays([]);
+    fetchRecurring();
+  };
+
+  const handleDeleteRecurring = async (templateId: number) => {
+    await fetch("/api/todos/recurring", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", templateId }),
+    });
+    fetchRecurring();
+  };
+
   const completedCount = todos.filter((t) => t.isCompleted).length;
   const incompleteTodos = todos.filter((t) => !t.isCompleted);
   const completedTodos = todos.filter((t) => t.isCompleted);
@@ -408,6 +461,114 @@ export default function PlannerPage() {
           No tasks planned for this day. Add some tasks to get started!
         </div>
       )}
+
+      {/* Recurring Habits Section */}
+      <div className="sq-panel p-5">
+        <button
+          onClick={() => setShowRecurring(!showRecurring)}
+          className="flex items-center justify-between w-full"
+        >
+          <div className="flex items-center gap-2">
+            <Repeat className="w-4 h-4 text-sq-purple" />
+            <span className="text-[14px] font-bold text-sq-text">Recurring Habits</span>
+            <span className="text-[12px] text-sq-muted">({recurringTemplates.length})</span>
+          </div>
+          <ChevronDown className={`w-4 h-4 text-sq-muted transition-transform ${showRecurring ? "rotate-180" : ""}`} />
+        </button>
+
+        <AnimatePresence>
+          {showRecurring && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 space-y-3">
+                {/* Existing templates */}
+                {recurringTemplates.map((tpl) => (
+                  <div key={tpl.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-sq-hover/50 border border-sq-border/50">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="w-3.5 h-3.5 text-sq-purple" />
+                      <span className="text-[14px] text-sq-text font-medium">{tpl.title}</span>
+                      <span className="text-[11px] px-1.5 py-0.5 rounded bg-sq-purple/10 text-sq-purple font-semibold">
+                        {tpl.recurType}
+                      </span>
+                      {tpl.recurDays && (
+                        <span className="text-[11px] text-sq-muted">{JSON.parse(tpl.recurDays).join(", ")}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteRecurring(tpl.id)}
+                      className="p-1 rounded text-sq-muted hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Add new recurring task */}
+                <div className="space-y-2 pt-2 border-t border-sq-border/50">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={recurTitle}
+                      onChange={(e) => setRecurTitle(e.target.value)}
+                      placeholder="New habit (e.g., Morning workout)..."
+                      className="flex-1 px-3 py-2 rounded-lg border border-sq-border bg-transparent text-[13px] text-sq-text placeholder:text-sq-muted/50 focus:outline-none focus:border-sq-accent"
+                      onKeyDown={(e) => e.key === "Enter" && handleCreateRecurring()}
+                    />
+                    <select
+                      value={recurCategory}
+                      onChange={(e) => setRecurCategory(e.target.value)}
+                      className="px-2 py-2 rounded-lg border border-sq-border bg-transparent text-[12px] text-sq-text focus:outline-none focus:border-sq-accent"
+                    >
+                      {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <select
+                      value={recurType}
+                      onChange={(e) => setRecurType(e.target.value)}
+                      className="px-2 py-1.5 rounded-lg border border-sq-border bg-transparent text-[12px] text-sq-text focus:outline-none focus:border-sq-accent"
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekdays">Weekdays</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="custom">Custom Days</option>
+                    </select>
+                    {recurType === "custom" && (
+                      <div className="flex gap-1">
+                        {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((day) => (
+                          <button
+                            key={day}
+                            onClick={() => setRecurDays((prev) =>
+                              prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+                            )}
+                            className={`px-2 py-1 rounded text-[11px] font-semibold transition-colors
+                              ${recurDays.includes(day)
+                                ? "bg-sq-purple text-white"
+                                : "bg-sq-hover text-sq-muted hover:text-sq-text"}`}
+                          >
+                            {day.charAt(0).toUpperCase() + day.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      onClick={handleCreateRecurring}
+                      disabled={!recurTitle.trim()}
+                      className="ml-auto px-3 py-1.5 rounded-lg bg-sq-purple text-white text-[12px] font-semibold hover:bg-sq-purple/90 transition-colors disabled:opacity-50"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Add Task Modal */}
       <AnimatePresence>

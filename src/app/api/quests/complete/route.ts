@@ -120,6 +120,30 @@ export async function POST(req: NextRequest) {
     data: { questId, xpEarned, goldEarned, notes: notes || null },
   });
 
+  // Update DailySnapshot for analytics
+  const today = new Date().toISOString().split("T")[0];
+  const existingSnap = await prisma.dailySnapshot.findUnique({ where: { date: today } });
+  if (existingSnap) {
+    await prisma.dailySnapshot.update({
+      where: { date: today },
+      data: {
+        xpEarned: { increment: xpEarned },
+        goldEarned: { increment: goldEarned + levelResult.goldBonus },
+        questsCompleted: { increment: 1 },
+      },
+    });
+  } else {
+    await prisma.dailySnapshot.create({
+      data: {
+        date: today,
+        xpEarned,
+        goldEarned: goldEarned + levelResult.goldBonus,
+        questsCompleted: 1,
+        streakDay: hunter.streak,
+      },
+    });
+  }
+
   return NextResponse.json({
     success: true,
     xpEarned,

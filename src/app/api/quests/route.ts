@@ -1,13 +1,29 @@
 // api/quests/route.ts — GET quests filtered by hunter level + POST create custom quest
+// Daily quests auto-reset at the start of each new day
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+function todayStr(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
 export async function GET() {
   const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
   if (!hunter) {
     return NextResponse.json({ error: "Hunter not found" }, { status: 404 });
+  }
+
+  // Auto-reset daily quests if a new day has started
+  const today = todayStr();
+  if (hunter.lastStreakDate !== today) {
+    // Reset all daily quests (mark as incomplete for today)
+    await prisma.quest.updateMany({
+      where: { isDaily: true },
+      data: { isCompleted: false, completedAt: null },
+    });
+    console.log("[Quests] Daily quests auto-reset for", today);
   }
 
   const quests = await prisma.quest.findMany({

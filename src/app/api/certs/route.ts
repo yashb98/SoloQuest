@@ -80,8 +80,78 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // Undo start — reset cert back to initial state, delete associated study plan todos
+  if (action === "undo_start") {
+    const { certId } = body as { certId: number };
+    const cert = await prisma.certRoadmap.findUnique({ where: { id: certId } });
+    if (!cert) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Delete all todos linked to this cert
+    await prisma.todoItem.deleteMany({ where: { certId: certId } });
+
+    // Reset cert state
+    await prisma.certRoadmap.update({
+      where: { id: certId },
+      data: {
+        currentWeek: 1,
+        isStarted: false,
+        studyPlan: "[]",
+      },
+    });
+
+    return NextResponse.json({ success: true, message: "Cert reset to initial state" });
+  }
+
+  // Pause — remove from active timeline but keep study plan
+  if (action === "pause") {
+    const { certId } = body as { certId: number };
+    const cert = await prisma.certRoadmap.findUnique({ where: { id: certId } });
+    if (!cert) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Delete planner todos but keep study plan JSON
+    await prisma.todoItem.deleteMany({ where: { certId: certId } });
+
+    await prisma.certRoadmap.update({
+      where: { id: certId },
+      data: { isStarted: false },
+    });
+
+    return NextResponse.json({ success: true, message: "Cert paused. Study plan preserved." });
+  }
+
+  // Resume — reactivate a paused cert
+  if (action === "resume") {
+    const { certId } = body as { certId: number };
+    const cert = await prisma.certRoadmap.findUnique({ where: { id: certId } });
+    if (!cert) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    await prisma.certRoadmap.update({
+      where: { id: certId },
+      data: { isStarted: true },
+    });
+
+    return NextResponse.json({ success: true, message: "Cert resumed." });
+  }
+
+  // Revert week — undo last week advance
+  if (action === "revert_week") {
+    const { certId } = body as { certId: number };
+    const cert = await prisma.certRoadmap.findUnique({ where: { id: certId } });
+    if (!cert) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (cert.currentWeek <= 1) return NextResponse.json({ error: "Already at week 1" }, { status: 400 });
+
+    await prisma.certRoadmap.update({
+      where: { id: certId },
+      data: { currentWeek: { decrement: 1 } },
+    });
+
+    return NextResponse.json({ success: true, currentWeek: cert.currentWeek - 1 });
+  }
+
   if (action === "delete") {
     const { certId } = body as { certId: number };
+    // Also delete associated study plan todos
+    await prisma.todoItem.deleteMany({ where: { certId: certId } });
     await prisma.certRoadmap.delete({ where: { id: certId } });
     return NextResponse.json({ success: true });
   }

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Scroll, ShoppingBag, Swords, Trophy, Target,
   Briefcase, GraduationCap, BarChart3, User, Bot, CalendarDays,
+  Timer, Link2, TrendingUp, Map,
 } from "lucide-react";
 
 const navItems = [
@@ -12,7 +13,11 @@ const navItems = [
   { href: "/quests", icon: Scroll, label: "Quests", emoji: "⚔️" },
   { href: "/dungeons", icon: Swords, label: "Dungeons", emoji: "🏰" },
   { href: "/planner", icon: CalendarDays, label: "Planner", emoji: "📋" },
+  { href: "/chains", icon: Link2, label: "Chains", emoji: "🔗" },
+  { href: "/timer", icon: Timer, label: "Timer", emoji: "⏱️" },
   { href: "/goals", icon: Target, label: "Goals", emoji: "🎯" },
+  { href: "/analytics", icon: TrendingUp, label: "Analytics", emoji: "📈" },
+  { href: "/roadmap", icon: Map, label: "Roadmap", emoji: "🗺️" },
   { href: "/applications", icon: Briefcase, label: "Jobs", emoji: "💼" },
   { href: "/achievements", icon: Trophy, label: "Badges", emoji: "🏅" },
   { href: "/certs", icon: GraduationCap, label: "Certs", emoji: "📜" },
@@ -25,8 +30,8 @@ const navItems = [
 const mobileItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
   { href: "/quests", icon: Scroll, label: "Quests" },
-  { href: "/dungeons", icon: Swords, label: "Dungeons" },
-  { href: "/mentor", icon: Bot, label: "Mentor" },
+  { href: "/planner", icon: CalendarDays, label: "Planner" },
+  { href: "/timer", icon: Timer, label: "Timer" },
   { href: "/profile", icon: User, label: "Profile" },
 ];
 
@@ -36,7 +41,7 @@ export default function BottomNav() {
   return (
     <>
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-sq-border md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sq-panel border-t border-sq-border md:hidden">
         <div className="flex items-center justify-around py-2">
           {mobileItems.map((item) => {
             const isActive = pathname === item.href;
@@ -44,6 +49,7 @@ export default function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors
                   ${isActive ? "text-sq-accent" : "text-sq-subtle hover:text-sq-text"}`}
               >
@@ -56,13 +62,13 @@ export default function BottomNav() {
       </nav>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[260px] flex-col bg-white border-r border-sq-border z-50">
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[260px] flex-col bg-sq-panel border-r border-sq-border z-50">
         <div className="px-7 pt-8 pb-6">
           <h1 className="text-[26px] font-bold text-sq-accent tracking-[-0.02em]">
             Solo Quest
           </h1>
           <p className="text-[13px] text-sq-muted font-medium tracking-[0.05em] uppercase mt-1">
-            Full Gamification v2.0
+            Full Gamification v3.0
           </p>
         </div>
         <nav className="flex-1 px-4 space-y-[2px] overflow-y-auto">
@@ -72,9 +78,10 @@ export default function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className={`flex items-center gap-[14px] px-4 py-3 rounded-xl transition-all w-full
                   ${isActive
-                    ? "bg-[#FFF3ED] text-sq-accent font-semibold"
+                    ? "bg-sq-accent/10 text-sq-accent font-semibold"
                     : "text-sq-subtle hover:bg-sq-hover font-[450]"
                   }`}
               >

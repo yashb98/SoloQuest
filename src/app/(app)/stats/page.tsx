@@ -86,15 +86,17 @@ export default function StatsPage() {
       {/* Radar Chart */}
       <div className="sq-panel p-5">
         <h2 className="font-semibold text-[15px] text-sq-text mb-4">Stat Distribution</h2>
-        <div className="w-full h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="#E8E4DE" />
-              <PolarAngleAxis dataKey="stat" tick={{ fill: "#9C8E82", fontSize: 11 }} />
-              <PolarRadiusAxis angle={90} domain={[0, Math.max(20, ...radarData.map((d) => d.value))]} tick={{ fill: "#9C8E82", fontSize: 9 }} />
-              <Radar name="Stats" dataKey="value" stroke="#C4653A" fill="#C4653A" fillOpacity={0.2} strokeWidth={2} />
-            </RadarChart>
-          </ResponsiveContainer>
+        <div className="flex justify-center">
+          <div style={{ width: 300, height: 300 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="#E8E4DE" />
+                <PolarAngleAxis dataKey="stat" tick={{ fill: "#9C8E82", fontSize: 11 }} />
+                <PolarRadiusAxis angle={90} domain={[0, Math.max(20, ...radarData.map((d) => d.value))]} tick={{ fill: "#9C8E82", fontSize: 9 }} />
+                <Radar name="Stats" dataKey="value" stroke="#C4653A" fill="#C4653A" fillOpacity={0.2} strokeWidth={2} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 

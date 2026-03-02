@@ -40,6 +40,8 @@ model Hunter {
   goldToMoneyRatio Float    @default(0.10)
   // Prestige
   prestigeCount    Int      @default(0)
+  // Job Roadmap
+  activeRoadmapId  Int?     // points to active JobRoadmap.id
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -60,6 +62,7 @@ model Quest {
   completedAt    DateTime?
   unlocksAtLevel Int          @default(1)
   dungeonId      Int?
+  roadmapId      Int?         // links to JobRoadmap for roadmap-generated quests
   createdAt      DateTime     @default(now())
   completions    Completion[]
 }
@@ -104,6 +107,7 @@ model Dungeon {
   activatedAt DateTime?
   deadline    DateTime?
   completedAt DateTime?
+  roadmapId   Int?      // links to JobRoadmap for roadmap-generated dungeons
   createdAt   DateTime  @default(now())
 }
 
@@ -172,6 +176,7 @@ model Goal {
   goldReward  Int       @default(100)
   isCompleted Boolean   @default(false)
   completedAt DateTime?
+  roadmapId   Int?      // links to JobRoadmap
   createdAt   DateTime  @default(now())
 }
 
@@ -202,6 +207,9 @@ model CertRoadmap {
   goldBonus      Int       @default(2000)
   isPassed       Boolean   @default(false)
   passedAt       DateTime?
+  studyPlan      String    @default("[]") // JSON: [{week, topics: [{title, description, youtubeUrl?, blogUrl?, isCompleted}]}]
+  isStarted      Boolean   @default(true)
+  roadmapId      Int?      // links to JobRoadmap
   createdAt      DateTime  @default(now())
 }
 
@@ -223,5 +231,79 @@ model TodoItem {
   priority    Int      @default(0) // 0=normal, 1=high, 2=critical
   sortOrder   Int      @default(0) // for drag-and-drop reordering
   category    String   @default("general") // general, health, learning, jobs, finance, focus
+  isRecurring Boolean  @default(false) // recurring task flag
+  recurType   String?  // daily|weekly|weekdays|custom
+  recurDays   String?  // JSON array of days e.g. ["mon","wed","fri"]
+  roadmapId   Int?     // links to JobRoadmap
+  certId      Int?     // links to CertRoadmap for study plan todos
   createdAt   DateTime @default(now())
+}
+
+// Quest Chains — linked quest sequences
+model QuestChain {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String    @default("")
+  totalSteps  Int       @default(0)
+  currentStep Int       @default(0)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  xpBonus     Int       @default(0) // bonus XP for completing entire chain
+  goldBonus   Int       @default(0)
+  roadmapId   Int?      // links to JobRoadmap
+  createdAt   DateTime  @default(now())
+}
+
+model QuestChainStep {
+  id          Int       @id @default(autoincrement())
+  chainId     Int
+  stepOrder   Int
+  title       String
+  category    String    @default("focus")
+  difficulty  String    @default("normal")
+  xpBase      Int       @default(50)
+  goldBase    Int       @default(10)
+  statTarget  String    @default("focus")
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+// Time tracking sessions
+model TimeSession {
+  id          Int       @id @default(autoincrement())
+  questId     Int?      // optional link to a quest
+  todoId      Int?      // optional link to a todo
+  label       String    @default("Focus Session")
+  duration    Int       // planned duration in minutes
+  elapsed     Int       @default(0) // actual elapsed seconds
+  isCompleted Boolean   @default(false)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+}
+
+// Job Roadmap — career path with AI-generated game content
+model JobRoadmap {
+  id              Int       @id @default(autoincrement())
+  targetRole      String    // e.g. "ML Engineer", "Full Stack Developer"
+  experienceLevel String    @default("beginner") // beginner|intermediate|senior
+  skills          String    @default("[]") // JSON array of skill strings
+  timeline        String    @default("6m") // 3m|6m|1y
+  isActive        Boolean   @default(true)
+  milestones      String    @default("[]") // JSON: [{title, description, weekNumber, isCompleted}]
+  summary         String    @default("")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Analytics daily snapshot for heatmap and trends
+model DailySnapshot {
+  id               Int    @id @default(autoincrement())
+  date             String @unique // YYYY-MM-DD
+  xpEarned         Int    @default(0)
+  goldEarned       Int    @default(0)
+  questsCompleted  Int    @default(0)
+  todosCompleted   Int    @default(0)
+  minutesFocused   Int    @default(0) // from time tracking
+  streakDay        Int    @default(0)
 }

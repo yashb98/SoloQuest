@@ -6,6 +6,7 @@ import { processXPGain } from "@/lib/leveling";
 export const dynamic = "force-dynamic";
 
 // Dungeon minimum levels by title (stable across re-seeds)
+// Dynamic roadmap dungeons not listed here get a fallback based on hunter level
 const DUNGEON_MIN_LEVELS_BY_TITLE: Record<string, number> = {
   "The Iron Body": 1,          // starter
   "The Algorithm Gauntlet": 3, // E-Rank+
@@ -19,6 +20,17 @@ const DUNGEON_MIN_LEVELS_BY_TITLE: Record<string, number> = {
   "The Full Stack Trial": 20,  // C-Rank
 };
 
+// For roadmap-generated dungeons not in the hardcoded list, use level 1 (always accessible)
+function getDungeonMinLevel(title: string, roadmapId: number | null): number {
+  if (DUNGEON_MIN_LEVELS_BY_TITLE[title] !== undefined) {
+    return DUNGEON_MIN_LEVELS_BY_TITLE[title];
+  }
+  // Roadmap-generated dungeons are accessible immediately
+  if (roadmapId) return 1;
+  // Unknown seeded dungeons default to level 1
+  return 1;
+}
+
 export async function GET() {
   const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
   const dungeons = await prisma.dungeon.findMany({
@@ -27,7 +39,7 @@ export async function GET() {
 
   // Attach minLevel info for frontend (lookup by title so IDs don't matter)
   const dungeonsWithLevel = dungeons.map((d) => {
-    const minLevel = DUNGEON_MIN_LEVELS_BY_TITLE[d.title] ?? 1;
+    const minLevel = getDungeonMinLevel(d.title, d.roadmapId);
     return {
       ...d,
       minLevel,
@@ -57,7 +69,7 @@ export async function POST(req: NextRequest) {
     if (!targetDungeon) {
       return NextResponse.json({ error: "Dungeon not found" }, { status: 404 });
     }
-    const minLvl = DUNGEON_MIN_LEVELS_BY_TITLE[targetDungeon.title] ?? 1;
+    const minLvl = getDungeonMinLevel(targetDungeon.title, targetDungeon.roadmapId);
     if (hunter.level < minLvl) {
       return NextResponse.json({
         error: `This dungeon requires Level ${minLvl}+. You are Level ${hunter.level}.`,

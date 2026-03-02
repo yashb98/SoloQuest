@@ -38,6 +38,13 @@ export async function POST(req: NextRequest) {
     include: { quest: { select: { title: true } } },
   });
 
+  // Fetch active roadmap target role for career-aware mentor advice
+  let targetRole: string | undefined;
+  if (hunter.activeRoadmapId) {
+    const roadmap = await prisma.jobRoadmap.findUnique({ where: { id: hunter.activeRoadmapId } });
+    if (roadmap) targetRole = roadmap.targetRole;
+  }
+
   try {
     const response = await mentorChat({
       hunterName: hunter.hunterName,
@@ -56,6 +63,7 @@ export async function POST(req: NextRequest) {
       activeQuests: activeQuests.map((q) => q.title),
       recentHistory: recentCompletions.map((c) => c.quest.title),
       userMessage: message,
+      targetRole,
     });
 
     await prisma.mentorLog.create({

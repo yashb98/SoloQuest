@@ -13,12 +13,33 @@
   --sq-text: #1A1A1A;
   --sq-muted: #9C8E82;
   --sq-subtle: #6B5F56;
+  --sq-hover: #F0EBE5;
+  --sq-warm: #FFF8F0;
+  --sq-warm-border: #F0E0D0;
+}
+
+.dark {
+  --sq-bg: #0F0F12;
+  --sq-panel: #1A1A22;
+  --sq-border: #2A2A35;
+  --sq-accent: #E08A5E;
+  --sq-accent-light: #F0A878;
+  --sq-text: #E8E4DE;
+  --sq-muted: #7A7068;
+  --sq-subtle: #9C8E82;
+  --sq-hover: #22222C;
+  --sq-warm: #1C1810;
+  --sq-warm-border: #2C2820;
 }
 
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: #DDD6CE transparent;
+}
+
+.dark * {
+  scrollbar-color: #3A3A44 transparent;
 }
 
 ::-webkit-scrollbar {
@@ -30,6 +51,9 @@
 ::-webkit-scrollbar-thumb {
   background: #DDD6CE;
   border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #3A3A44;
 }
 
 body {
@@ -43,10 +67,13 @@ body {
 button:hover {
   filter: brightness(0.97);
 }
+.dark button:hover {
+  filter: brightness(1.05);
+}
 
 @layer components {
   .sq-panel {
-    @apply bg-sq-panel border border-sq-border rounded-2xl shadow-sq-card;
+    @apply bg-[var(--sq-panel)] border border-[var(--sq-border)] rounded-2xl shadow-sq-card;
   }
 
   .sq-button-accent {
@@ -54,7 +81,6 @@ button:hover {
            hover:shadow-sq-accent-glow transition-all duration-200;
   }
 
-  /* Alias for pages that still use sq-button-gold */
   .sq-button-gold {
     @apply bg-gradient-to-r from-sq-accent to-sq-accent-light text-white font-semibold px-5 py-2.5 rounded-xl
            hover:shadow-sq-accent-glow transition-all duration-200;
@@ -66,13 +92,13 @@ button:hover {
   }
 
   .sq-button-outline {
-    @apply bg-white text-sq-subtle font-semibold px-5 py-2.5 rounded-xl border-[1.5px] border-sq-border
+    @apply bg-[var(--sq-panel)] text-[var(--sq-subtle)] font-semibold px-5 py-2.5 rounded-xl border-[1.5px] border-[var(--sq-border)]
            hover:border-sq-accent hover:text-sq-accent transition-all duration-200;
   }
 
   .sq-input {
-    @apply w-full bg-white border border-sq-border rounded-xl px-4 py-2.5 text-[15px] text-sq-text
-           focus:border-sq-accent/50 focus:outline-none focus:ring-2 focus:ring-sq-accent/10 transition-all;
+    @apply w-full bg-[var(--sq-panel)] border border-[var(--sq-border)] rounded-xl px-4 py-2.5 text-[15px] text-[var(--sq-text)]
+           focus:border-[var(--sq-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--sq-accent)] transition-all;
   }
 
   .sq-badge {
