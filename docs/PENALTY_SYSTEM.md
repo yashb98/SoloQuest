@@ -6,13 +6,30 @@ The penalty system makes gold a real currency. You earn gold by completing quest
 
 ---
 
+## How the Day Works
+
+**During the day:** Gold only goes UP. Completing quests earns gold immediately.
+
+**Next day reset:** When you open the app on a new day, penalties fire for yesterday's incomplete quests. Gold is deducted.
+
+**Fresh start:** If `lastStreakDate` is null (first time or after a reset), no penalties fire. You get a free first day to start earning. Penalties begin the following day.
+
+```
+Day 1 (fresh start): No penalties. Complete quests. Earn gold.
+Day 2 morning:       Penalties for Day 1's incomplete quests. Then earn gold.
+Day 3 morning:       Penalties for Day 2's incomplete quests. Then earn gold.
+...
+```
+
+---
+
 ## How You Lose Gold
 
 ### 1. Failed Daily Quests
 
-**When:** End of each day (fires when the next day's reset runs).
+**When:** Start of the next day (fires when the daily reset runs on app load).
 
-**What happens:** Every daily quest you didn't complete gets penalized.
+**What happens:** Every daily quest (`isDaily: true`) you didn't complete the previous day gets penalized.
 
 **Formula:**
 
@@ -22,12 +39,14 @@ total daily penalty = sum of all failed quest goldBases
 ```
 
 **Example:**
-- "Morning workout" (goldBase: 15) - not completed = -15G
-- "Read 30 mins" (goldBase: 10) - not completed = -10G
-- "Apply to 2 jobs" (goldBase: 20) - completed = no penalty
-- **Total penalty: -25G**
+- "Morning workout" (goldBase: 20) - not completed = -20G
+- "Apply to 7 Jobs" (goldBase: 25) - not completed = -25G
+- "Meditate 10 min" (goldBase: 10) - completed = no penalty
+- **Total penalty: -45G**
 
 Each failed quest creates a Penalty record with reason `"quest_failed"` and description `"Failed daily: {title}"`.
+
+**Current daily quests:** 32 quests totaling 469G max daily penalty.
 
 ---
 
@@ -45,6 +64,8 @@ total weekly penalty = sum of all failed weekly quest goldBases
 ```
 
 Each creates a Penalty record with description `"Failed weekly: {title}"`.
+
+**Current weekly quests:** 18 quests (including things like Study Cert Material 5 hrs/week, Build/Improve an AI Agent, etc.)
 
 ---
 
@@ -79,10 +100,10 @@ Each spend creates a Penalty record with reason `"spending"` and description lik
 **Formula:**
 
 ```
-penalty = min(floor(current gold * 0.10), 500)
+penalty = min(floor(max(current gold, 0) * 0.10), 500)
 ```
 
-- 10% of your gold, capped at 500G max
+- 10% of your gold (or 0 if in debt), capped at 500G max
 - Streak resets to 0
 
 **Protection:** Streak shields (max 3, earned every 21-day streak milestone) block this penalty entirely.
@@ -93,7 +114,7 @@ penalty = min(floor(current gold * 0.10), 500)
 | 200G | -20G |
 | 2,000G | -200G |
 | 6,000G | -500G (capped) |
-| -500G (in debt) | 0G (10% of negative is 0) |
+| -500G (in debt) | 0G (negative gold = no penalty) |
 
 ---
 
@@ -105,6 +126,18 @@ Gold can go negative. When in debt:
 - **Penalties page** shows a red warning banner: "You owe XXXG. Complete quests to clear your debt."
 - There's no restriction on spending while in debt (you can keep spending)
 - Earn gold back by completing quests to clear the debt
+
+---
+
+## Quest Tiers
+
+| Tier | Reset | Penalty Timing | Example |
+|------|-------|---------------|---------|
+| Daily (`isDaily: true`) | Every day | Next morning | Morning Workout, Apply to 7 Jobs |
+| Weekly (`tier: "weekly"`) | Every Monday | Monday morning | Study Cert Material 5 hrs/week, 50 Jobs This Week |
+| Custom (`tier: "custom"`) | Never | No recurring penalty | Cancel Unused Subscription |
+
+**Custom quests** are one-and-done. They don't reset or penalize. Complete them once and optionally delete them.
 
 ---
 
@@ -125,27 +158,50 @@ Some quests are one-time (e.g. "Update LinkedIn profile"). After completing them
 When the daily reset route (`POST /api/quests/reset`) fires:
 
 ```
-1. Check streak (did you complete anything yesterday?)
+0. Fresh start check
+   - If lastStreakDate is null: no penalties, just set date, return
+   - This prevents penalizing on first day or after a full reset
+
+1. Optimistic lock
+   - Claim today's reset by atomically updating lastStreakDate
+   - If another request already claimed it, bail out (prevents duplicates)
+
+2. Check streak (did you complete anything yesterday?)
    - Yes: streak + 1
    - No shields: lose 10% gold (max 500), streak = 0
    - Has shield: use shield, keep streak
 
-2. Award streak milestone bonuses (gold + titles)
+3. Award streak milestone bonuses (gold + titles)
 
-3. Penalize incomplete DAILY quests
-   - For each: penalty = goldBase
+4. Penalize incomplete DAILY quests
+   - For each incomplete daily quest: penalty = goldBase
    - Create Penalty records
 
-4. If Monday: Penalize incomplete WEEKLY quests
-   - For each: penalty = goldBase
+5. If Monday: Penalize incomplete WEEKLY quests
+   - For each incomplete weekly quest: penalty = goldBase
    - Create Penalty records
    - Reset all weekly quests
 
-5. Reset all daily quests (mark incomplete)
+6. Reset all daily quests (mark incomplete for today)
 
-6. Update hunter gold:
+7. Update hunter gold:
    gold += streakBonus - streakPenalty - dailyPenalties - weeklyPenalties
 ```
+
+---
+
+## Race Condition Prevention
+
+The reset route uses **optimistic locking** to prevent duplicate penalties:
+
+1. Read `hunter.lastStreakDate` (the "previous" value)
+2. Atomically update `lastStreakDate = today` WHERE `lastStreakDate = previous`
+3. If `updateMany` returns `count: 0`, another request already claimed the reset — bail out
+4. Only the winning request proceeds to create penalties and deduct gold
+
+This prevents the bug where two simultaneous requests (e.g. page load + API call) both create penalty records.
+
+Additionally, `GET /api/quests` is **read-only** — it does NOT reset quests or modify any data. All reset logic is exclusively in `POST /api/quests/reset`.
 
 ---
 
@@ -181,7 +237,8 @@ Shows:
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/quests/reset` | POST | Triggers daily/weekly penalties + resets |
+| `/api/quests/reset` | POST | Triggers daily/weekly penalties + resets (with optimistic lock) |
+| `/api/quests` | GET | Read-only quest list (no side effects) |
 | `/api/savings` | POST | Log spending (deducts gold) |
 | `/api/penalties` | GET | Get penalty history + summaries |
 | `/api/quests?id=X` | DELETE | Soft-delete a completed quest |
@@ -192,7 +249,8 @@ Shows:
 
 | Penalty Type | Trigger | Formula | Cap |
 |---|---|---|---|
-| Daily quest fail | End of day | goldBase per quest | None |
-| Weekly quest fail | Monday | goldBase per quest | None |
+| Daily quest fail | Next morning | goldBase per quest | None |
+| Weekly quest fail | Monday morning | goldBase per quest | None |
 | Spending | Manual log | 1 pound = 10G | None (debt allowed) |
 | Streak break | Miss a day | 10% of gold | 500G max |
+| Fresh start | First day | None | N/A (free day) |

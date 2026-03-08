@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Undo2, ChevronDown, Clock, Lightbulb, Star, Wrench, Target, Trash2 } from "lucide-react";
+import { Check, Undo2, ChevronDown, Clock, Lightbulb, Star, Wrench, Target, Trash2, Pencil } from "lucide-react";
 import { useState } from "react";
 import { getQuestDetail } from "@/lib/quest-details";
 
@@ -23,6 +23,7 @@ interface QuestCardProps {
   onComplete: (questId: number) => void;
   onUndo: (questId: number) => void;
   onDelete?: (questId: number) => void;
+  onEdit?: (quest: Quest) => void;
   isLoading: boolean;
 }
 
@@ -61,7 +62,7 @@ const difficultyConfig: Record<string, { label: string; color: string; stars: nu
   legendary: { label: "Legendary", color: "text-purple-600", stars: 4 },
 };
 
-export default function QuestCard({ quest, onComplete, onUndo, onDelete, isLoading }: QuestCardProps) {
+export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit, isLoading }: QuestCardProps) {
   const color = categoryColors[quest.category] || { bg: "bg-gray-100", text: "text-gray-600" };
   const [showUndo, setShowUndo] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -137,14 +138,24 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, isLoadi
           </div>
         </div>
 
-        {/* Right side: expand + delete + complete buttons */}
+        {/* Right side: edit + delete + expand + complete buttons */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Delete button — only after quest is completed */}
-          {quest.isCompleted && onDelete && (
+          {/* Edit button */}
+          {onEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(quest); }}
+              className="w-9 h-9 rounded-full flex items-center justify-center border-[1.5px] border-[#DDD6CE] bg-white hover:bg-blue-50 hover:border-blue-400 transition-all"
+              title="Edit quest"
+            >
+              <Pencil className="w-4 h-4 text-sq-muted hover:text-blue-500" />
+            </button>
+          )}
+          {/* Delete button */}
+          {onDelete && (
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(quest.id); }}
               className="w-9 h-9 rounded-full flex items-center justify-center border-[1.5px] border-red-300 bg-white hover:bg-red-50 hover:border-red-400 transition-all"
-              title="Delete quest permanently"
+              title="Delete quest"
             >
               <Trash2 className="w-4 h-4 text-red-400" />
             </button>

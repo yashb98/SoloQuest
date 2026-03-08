@@ -1,4 +1,4 @@
-// api/quests/route.ts — GET quests filtered by hunter level + POST create custom quest
+// api/quests/route.ts — GET quests + POST create + PUT edit + DELETE any quest
 // Quest resets are handled exclusively by POST /api/quests/reset (called from HunterContext on load)
 // GET is read-only — no side effects, no race conditions
 import { NextRequest, NextResponse } from "next/server";
@@ -64,6 +64,51 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true, quest });
 }
 
+export async function PUT(req: NextRequest) {
+  const body = await req.json();
+  const { id, title, category, difficulty, tier, xpBase, goldBase, statTarget, statGain } = body as {
+    id: number;
+    title?: string;
+    category?: string;
+    difficulty?: string;
+    tier?: string;
+    xpBase?: number;
+    goldBase?: number;
+    statTarget?: string;
+    statGain?: number;
+  };
+
+  if (!id) {
+    return NextResponse.json({ error: "Quest ID required" }, { status: 400 });
+  }
+
+  const quest = await prisma.quest.findUnique({ where: { id } });
+  if (!quest) {
+    return NextResponse.json({ error: "Quest not found" }, { status: 404 });
+  }
+
+  const validCategories = ["health", "learning", "jobs", "finance", "focus", "food", "mental", "agentiq"];
+  const validDifficulties = ["normal", "hard", "legendary"];
+  const validTiers = ["daily", "weekly", "custom"];
+  const validStats = ["vitality", "intel", "hustle", "wealth", "focus", "agentIQ"];
+
+  const data: Record<string, unknown> = {};
+  if (title !== undefined) data.title = title;
+  if (category !== undefined && validCategories.includes(category)) data.category = category;
+  if (difficulty !== undefined && validDifficulties.includes(difficulty)) data.difficulty = difficulty;
+  if (tier !== undefined && validTiers.includes(tier)) {
+    data.tier = tier;
+    data.isDaily = tier === "daily";
+  }
+  if (xpBase !== undefined) data.xpBase = xpBase;
+  if (goldBase !== undefined) data.goldBase = goldBase;
+  if (statTarget !== undefined && validStats.includes(statTarget)) data.statTarget = statTarget;
+  if (statGain !== undefined) data.statGain = statGain;
+
+  const updated = await prisma.quest.update({ where: { id }, data });
+  return NextResponse.json({ success: true, quest: updated });
+}
+
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const questId = Number(searchParams.get("id"));
@@ -75,14 +120,6 @@ export async function DELETE(req: NextRequest) {
   const quest = await prisma.quest.findUnique({ where: { id: questId } });
   if (!quest) {
     return NextResponse.json({ error: "Quest not found" }, { status: 404 });
-  }
-
-  // Only allow deleting completed quests
-  if (!quest.isCompleted) {
-    return NextResponse.json(
-      { error: "Can only delete completed quests" },
-      { status: 400 }
-    );
   }
 
   // Soft delete — mark as inactive so it won't show up or reset

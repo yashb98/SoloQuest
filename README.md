@@ -12,17 +12,20 @@ A gamified productivity and career development platform built with Next.js. Turn
 - **6 Core Stats** - Vitality, Intelligence, Hustle, Wealth, Focus, AgentIQ. Each quest targets a specific stat. Allocate stat points earned per level.
 - **Streak System** - Daily streak tracking with multipliers (1.0x to 2.0x). Streak shields, freezes, milestone titles (Iron Will, Consistent, Unbreakable, Monarch, Sovereign), and gold penalties for breaks.
 - **Class System** - 4 classes (Warrior, Scholar, Rogue, Paladin) with +10% XP bonus on matching stat quests.
-- **Gold Currency** - Earned from quests, spent in the reward shop on real-world treats and items.
+- **Gold Currency** - Earned from quests, spent in the reward shop. Gold is real — 1 pound = 10 gold. All real-life spending deducts gold.
+- **Penalty System** - Failed daily quests cost gold (goldBase per quest). Failed weekly quests penalized on Mondays. Streak breaks cost 10% of gold (max 500G). Debt is allowed — gold can go negative.
 
 ### Quest Board
 
-- **48+ Quests** across 8 categories (Health, Learning, Jobs, Finance, Focus, AI/Tech, Food, Mental)
-- **Daily/Weekly/Custom tiers** with difficulty levels (Normal, Hard, Legendary)
+- **56+ Quests** across 8 categories (Health, Learning, Jobs, Finance, Focus, AI/Tech, Food, Mental)
+- **32 Daily / 18 Weekly / 7 Custom** quests with difficulty levels (Normal, Hard, Legendary)
 - **Search and filter** quests by name, category, and tier
 - **One-click completion** with animated reward notification popup
 - **Expandable details** with step-by-step guides, pro tips, and tool recommendations
-- **Daily auto-reset** - daily quests refresh automatically each day
+- **Daily auto-reset** - daily quests reset each morning via penalty-aware reset engine
+- **Weekly reset** - weekly quests reset every Monday with penalty check
 - **Custom quest creation** with AI-generated specifications
+- **Quest deletion** - soft-delete completed one-time quests to prevent false penalties
 
 ### Dungeons (7-Day Challenges)
 
@@ -102,11 +105,29 @@ All AI uses Anthropic Claude as primary with Mistral free tier as fallback:
 
 30+ achievements across 6 categories with 5 rarity tiers (Common through Mythic). Unlock rewards include XP, gold, and exclusive titles.
 
+### Penalty System
+
+Gold is a real currency tied to real-life spending (1 pound = 10 gold).
+
+| Penalty Type | Trigger | Formula |
+|---|---|---|
+| Daily quest fail | Next morning | goldBase per quest |
+| Weekly quest fail | Monday morning | goldBase per quest |
+| Real-life spending | Manual log | 1 pound = 10G |
+| Streak break | Miss a day | 10% of gold (max 500G) |
+
+- **Debt system** - Gold can go negative. Skull icon + red "DEBT" indicator in TopBar.
+- **Fresh start protection** - No penalties on first day or after a reset.
+- **Race condition prevention** - Optimistic locking prevents duplicate penalty records.
+- **Penalties page** - Full history with today/weekly/monthly summaries.
+
+See [docs/PENALTY_SYSTEM.md](./docs/PENALTY_SYSTEM.md) for complete documentation.
+
 ### Additional Features
 
 - **Timer** - Pomodoro/focus timer with quest/todo linking and session history
 - **Job Applications** - Full pipeline tracker (Discovered, Applied, Interview, Offer, Rejected)
-- **Savings Tracker** - Expense logging, savings pots, budget tracking
+- **Savings Tracker** - Expense logging with gold deduction (spending = gold penalty)
 - **Quest Chains** - Multi-step linked quests with progression and completion bonuses
 - **Dark Mode** - Full dark theme with localStorage persistence
 - **Toast Notifications** - 6 types (XP, gold, level-up, achievement, info, error)
@@ -198,11 +219,12 @@ src/
       analytics/        # Heatmap and trends
       shop/             # Reward store
       savings/          # Financial tracker
+      penalties/        # Gold penalty history
       applications/     # Job application pipeline
       certs/            # Certification study plans
       roadmap/          # AI career path generator
       mentor/           # AI coaching chatbot
-    api/                # 31 API endpoints
+    api/                # 33 API endpoints
   components/           # Reusable UI components
   contexts/             # HunterContext (global state)
   lib/                  # Core logic
@@ -212,15 +234,15 @@ src/
     quest-details.ts    # 50+ quest step-by-step guides
     db.ts               # Prisma client singleton
 prisma/
-  schema.prisma         # 19 database models
-  seed.ts               # 48 quests, 10 dungeons, 40 rewards, 30 achievements
+  schema.prisma         # 20 database models (includes Penalty)
+  seed.ts               # 56+ quests, 10 dungeons, 40 rewards, 30 achievements
 ```
 
 ---
 
 ## Database
 
-19 Prisma models including: Hunter, Quest, Completion, Dungeon, Exam, Achievement, Goal, Application, CertRoadmap, TodoItem, QuestChain, QuestChainStep, TimeSession, JobRoadmap, DailySnapshot, Briefing, Reward, SavingsLog, SpendLog, MentorLog.
+20 Prisma models including: Hunter, Quest, Completion, Dungeon, Exam, Achievement, Goal, Application, CertRoadmap, TodoItem, QuestChain, QuestChainStep, TimeSession, JobRoadmap, DailySnapshot, Briefing, Reward, SavingsLog, SpendLog, MentorLog, Penalty.
 
 See [documentation.md](./documentation.md) for full schema details.
 
@@ -262,6 +284,7 @@ Vision features (image/PDF extraction) also support fallback:
 | Certs | `/certs` | Certification study plans |
 | Roadmap | `/roadmap` | AI career path generator |
 | Mentor | `/mentor` | AI coaching chatbot |
+| Penalties | `/penalties` | Gold penalty history and debt tracker |
 
 ---
 

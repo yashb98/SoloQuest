@@ -138,6 +138,13 @@ export default function QuestsPage() {
     }
   };
 
+  const handleEdit = async (quest: Quest, updates: Partial<Quest>) => {
+    setQuests((prev) =>
+      prev.map((q) => (q.id === quest.id ? { ...q, ...updates } : q))
+    );
+    addToast({ type: "info", title: "Quest updated", description: updates.title || quest.title, duration: 2500 });
+  };
+
   return (
     <>
       <QuestBoard
@@ -145,6 +152,7 @@ export default function QuestsPage() {
         onComplete={handleComplete}
         onUndo={handleUndo}
         onDelete={handleDelete}
+        onEdit={handleEdit}
         onQuestCreated={fetchQuests}
         loadingQuestId={loadingQuestId}
       />

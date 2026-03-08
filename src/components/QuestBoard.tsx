@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, X, Sparkles, Loader2, Search } from "lucide-react";
+import { Plus, X, Sparkles, Loader2, Search, Save } from "lucide-react";
 import QuestCard from "./QuestCard";
 
 interface Quest {
@@ -23,6 +23,7 @@ interface QuestBoardProps {
   onComplete: (questId: number) => void;
   onUndo: (questId: number) => void;
   onDelete?: (questId: number) => void;
+  onEdit?: (quest: Quest, updates: Partial<Quest>) => void;
   onQuestCreated?: () => void;
   loadingQuestId: number | null;
 }
@@ -66,10 +67,11 @@ const STAT_OPTIONS = [
   { key: "agentIQ", label: "Agent IQ (AIQ)" },
 ];
 
-export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onQuestCreated, loadingQuestId }: QuestBoardProps) {
+export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onEdit, onQuestCreated, loadingQuestId }: QuestBoardProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeTier, setActiveTier] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingQuest, setEditingQuest] = useState<Quest | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredQuests = useMemo(() => {
@@ -173,7 +175,7 @@ export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onQue
       <div className="flex flex-col gap-3">
         <AnimatePresence mode="popLayout">
           {filteredQuests.map((quest) => (
-            <QuestCard key={quest.id} quest={quest} onComplete={onComplete} onUndo={onUndo} onDelete={onDelete} isLoading={loadingQuestId === quest.id} />
+            <QuestCard key={quest.id} quest={quest} onComplete={onComplete} onUndo={onUndo} onDelete={onDelete} onEdit={(q) => setEditingQuest(q)} isLoading={loadingQuestId === quest.id} />
           ))}
         </AnimatePresence>
         {filteredQuests.length === 0 && (
@@ -189,6 +191,20 @@ export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onQue
           <AddQuestModal
             onClose={() => setShowAddModal(false)}
             onCreated={() => { setShowAddModal(false); onQuestCreated?.(); }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Edit Quest Modal */}
+      <AnimatePresence>
+        {editingQuest && (
+          <EditQuestModal
+            quest={editingQuest}
+            onClose={() => setEditingQuest(null)}
+            onSaved={(updates) => {
+              onEdit?.(editingQuest, updates);
+              setEditingQuest(null);
+            }}
           />
         )}
       </AnimatePresence>
@@ -366,6 +382,144 @@ function AddQuestModal({ onClose, onCreated }: { onClose: () => void; onCreated:
           className="sq-button-gold w-full text-[14px] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? "Creating..." : "Create Quest"}
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// --- Edit Quest Modal ---
+function EditQuestModal({ quest, onClose, onSaved }: { quest: Quest; onClose: () => void; onSaved: (updates: Partial<Quest>) => void }) {
+  const [title, setTitle] = useState(quest.title);
+  const [category, setCategory] = useState(quest.category);
+  const [difficulty, setDifficulty] = useState(quest.difficulty);
+  const [tier, setTier] = useState(quest.tier);
+  const [statTarget, setStatTarget] = useState(quest.statTarget);
+  const [xpBase, setXpBase] = useState(quest.xpBase);
+  const [goldBase, setGoldBase] = useState(quest.goldBase);
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!title.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/quests", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: quest.id, title: title.trim(), category, difficulty, tier, xpBase, goldBase, statTarget }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onSaved({ title: title.trim(), category, difficulty, tier, xpBase, goldBase, statTarget });
+      }
+    } catch (e) {
+      console.error("Failed to edit quest:", e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        className="sq-panel p-6 max-w-lg w-full mx-4 space-y-5 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-[20px] font-bold text-sq-text">Edit Quest</h3>
+          <button onClick={onClose} className="p-1 rounded-lg text-sq-muted hover:text-sq-text hover:bg-sq-hover transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Title */}
+        <div>
+          <label className="text-[13px] font-semibold text-sq-text block mb-1.5">Quest Title</label>
+          <input
+            type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text placeholder:text-sq-muted/50 focus:outline-none focus:border-sq-accent"
+          />
+        </div>
+
+        {/* Category + Difficulty */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[13px] font-semibold text-sq-text block mb-1.5">Category</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text focus:outline-none focus:border-sq-accent"
+            >
+              <option value="health">Health</option>
+              <option value="learning">Learning</option>
+              <option value="jobs">Jobs</option>
+              <option value="finance">Finance</option>
+              <option value="focus">Focus</option>
+              <option value="food">Food</option>
+              <option value="mental">Mental</option>
+              <option value="agentiq">AI/Tech</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[13px] font-semibold text-sq-text block mb-1.5">Difficulty</label>
+            <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text focus:outline-none focus:border-sq-accent"
+            >
+              <option value="normal">Normal</option>
+              <option value="hard">Hard</option>
+              <option value="legendary">Legendary</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Tier + Stat */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[13px] font-semibold text-sq-text block mb-1.5">Tier</label>
+            <select value={tier} onChange={(e) => setTier(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text focus:outline-none focus:border-sq-accent"
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[13px] font-semibold text-sq-text block mb-1.5">Stat Target</label>
+            <select value={statTarget} onChange={(e) => setStatTarget(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text focus:outline-none focus:border-sq-accent"
+            >
+              {STAT_OPTIONS.map((s) => (
+                <option key={s.key} value={s.key}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* XP + Gold */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[13px] font-semibold text-sq-text block mb-1.5">Base XP</label>
+            <input type="number" value={xpBase} onChange={(e) => setXpBase(Number(e.target.value))} min={10} max={500}
+              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text focus:outline-none focus:border-sq-accent"
+            />
+          </div>
+          <div>
+            <label className="text-[13px] font-semibold text-sq-text block mb-1.5">Base Gold</label>
+            <input type="number" value={goldBase} onChange={(e) => setGoldBase(Number(e.target.value))} min={5} max={200}
+              className="w-full px-3 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text focus:outline-none focus:border-sq-accent"
+            />
+          </div>
+        </div>
+
+        <button onClick={handleSubmit} disabled={!title.trim() || saving}
+          className="sq-button-gold w-full text-[14px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <Save className="w-4 h-4" />
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </motion.div>
     </motion.div>

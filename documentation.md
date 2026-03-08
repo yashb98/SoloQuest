@@ -27,18 +27,19 @@ SoloQuest follows a standard Next.js App Router architecture:
 ```
 src/
   app/
-    (app)/           # All authenticated pages (18 pages)
+    (app)/           # All authenticated pages (19 pages)
       layout.tsx     # Shared layout with TopBar, BottomNav, HunterProvider
       dashboard/     # Main hub
       quests/        # Quest board
+      penalties/     # Gold penalty history
       ...
-    api/             # 31 API route handlers
+    api/             # 33 API route handlers
   components/        # Reusable UI components
   contexts/          # React context providers (HunterContext)
   lib/               # Core logic (XP engine, AI, DB, quest details)
 prisma/
-  schema.prisma      # 19 database models
-  seed.ts            # Seed data (48 quests, 10 dungeons, 40 rewards, 30 achievements)
+  schema.prisma      # 20 database models
+  seed.ts            # Seed data (56+ quests, 10 dungeons, 40 rewards, 30 achievements)
 ```
 
 **Data flow:** Pages fetch from API routes, which read/write via Prisma ORM to a LibSQL/SQLite database. AI features call Anthropic Claude (primary) with Mistral (fallback).
@@ -123,7 +124,7 @@ npm run dev
 
 ## Database Schema
 
-### 19 Models Overview
+### 20 Models Overview
 
 #### Hunter (Player Profile)
 The core player model with all progression data.
@@ -166,6 +167,16 @@ The core player model with all progression data.
 | deadline | DateTime? | 7-day countdown end |
 | isActive / isCompleted / isFailed | Boolean | Status tracking |
 
+#### Penalty (Gold Penalties)
+| Field | Type | Description |
+|-------|------|-------------|
+| questId | Int? | Links to quest (null for spending penalties) |
+| questTitle | String | Quest name for display |
+| goldLost | Int | Amount of gold deducted |
+| reason | String | "quest_failed" or "spending" |
+| description | String | Human-readable explanation |
+| createdAt | DateTime | When the penalty was applied |
+
 #### Additional Models
 - **Completion** - Historical quest completion records
 - **Reward** - Shop items with gold costs and real-world equivalents
@@ -203,7 +214,7 @@ The main hub displaying an overview of all active systems.
 ---
 
 ### 2. Quest Board (`/quests`)
-The core quest system with 48+ quests across 8 categories.
+The core quest system with 56+ quests across 8 categories (32 daily, 18 weekly, 7 custom).
 
 **Features:**
 - Search bar to filter quests by title
@@ -215,7 +226,9 @@ The core quest system with 48+ quests across 8 categories.
 - Expandable detail panels (steps, tips, tools, estimated time)
 - Add custom quest modal with AI-generated specs
 - Quest completion notification popup (shows rewards earned)
-- Daily quests auto-reset at the start of each new day
+- Quest deletion (soft delete for completed one-time quests)
+- Daily quests reset each morning via penalty-aware reset engine
+- Weekly quests reset every Monday with penalty check
 
 ---
 
@@ -389,7 +402,20 @@ Spend earned gold on real-world rewards.
 
 ---
 
-### 14. Savings Tracker (`/savings`)
+### 14. Penalties (`/penalties`)
+Gold penalty tracking and debt management.
+
+**Features:**
+- Current gold display (red when in debt)
+- Debt warning banner with amount owed
+- Summary cards: Today / This Week / This Month penalty totals
+- Monthly breakdown: Failed quests vs Spending split
+- Today's penalty list with icons (swords for quest fails, credit card for spending)
+- Full penalty history (last 50 entries with timestamps)
+
+---
+
+### 15. Savings Tracker (`/savings`)
 Financial discipline and expense tracking.
 
 **Features:**
@@ -476,10 +502,16 @@ Context-aware AI coaching chatbot.
 ### Quests
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/quests` | Fetch quests (auto-resets daily quests) |
+| GET | `/api/quests` | Fetch quests (read-only, no side effects) |
 | POST | `/api/quests` | Create custom quest |
+| DELETE | `/api/quests?id=X` | Soft-delete a completed quest |
 | POST | `/api/quests/complete` | Complete or undo quest |
-| POST | `/api/quests/reset` | Daily reset (streak engine + quest reset) |
+| POST | `/api/quests/reset` | Daily reset with penalty engine (optimistic lock) |
+
+### Penalties
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/penalties` | Get penalty history + today/weekly/monthly summaries |
 
 ### Dungeons
 | Method | Endpoint | Description |
@@ -617,11 +649,21 @@ effectiveXP = baseXP * streakMultiplier * classBonus
 | Paladin | Vitality | +10% XP on matching quests |
 
 ### Daily Reset Logic
-- Triggers automatically on app load and when fetching quests
-- Idempotent (safe to call multiple times per day)
-- Resets all `isDaily: true` quests to incomplete
-- Runs streak engine (increment/break/shield logic)
-- Awards streak milestones and bonuses
+- Triggers automatically on app load via HunterContext (`POST /api/quests/reset`)
+- `GET /api/quests` is read-only — no reset side effects
+- Uses optimistic locking to prevent duplicate penalty creation from race conditions
+- Fresh start protection: no penalties when `lastStreakDate` is null (first day or after reset)
+- Idempotent (safe to call multiple times per day — second call returns "Already reset today")
+
+**Reset flow:**
+1. Fresh start check (skip penalties if first day)
+2. Optimistic lock (claim reset atomically, bail if another request won)
+3. Streak engine (increment/break/shield)
+4. Streak milestone bonuses
+5. Penalize incomplete daily quests (create Penalty records, deduct gold)
+6. If Monday: penalize incomplete weekly quests, reset weekly quests
+7. Reset all daily quests to incomplete
+8. Update hunter gold: `+streakBonus - streakPenalty - dailyPenalties - weeklyPenalties`
 
 ---
 
@@ -680,25 +722,24 @@ Global state provider wrapping all pages.
 - `addToast()` / `removeToast()` - 6 toast types (xp, gold, level, achievement, info, error)
 - `darkMode` / `toggleDarkMode()` - Theme toggle
 - `checkAchievements()` - Trigger achievement checks
-- Auto daily quest reset on load
+- Auto daily reset on load (`POST /api/quests/reset` — penalty-aware, with post-reset refresh)
 
 ---
 
 ## Seed Data
 
-### Quests (48 total)
+### Quests (56+ total)
 
-**Daily Quests (40)** across 6 stat categories:
+**Daily Quests (32)** across 6 stat categories:
 - Health/Vitality (8): Workout, walk, hydration, sleep, cooking, nutrition, stretching, meditation
-- Jobs/Hustle (8): Applications, resume, cover letters, networking, interviews, research, LinkedIn, follow-ups
-- Learning/Intel (8): LeetCode, cert study, SQL, reading, tutorials, notes, system design, ML deep-dive
-- Finance/Wealth (8): Expense logging, spending discipline, savings, budget review, cooking, side income, subscriptions
-- Focus/Discipline (8): Pomodoro sessions, social media limits, deep work, morning routine, evening review, screen time, inbox zero, planning
-- AI/AgentIQ (8): Agent building, prompt engineering, LangChain, research papers, MLOps, Kaggle
+- Jobs/Hustle (7): Apply to 7 jobs, resume, cover letters, networking, STAR interviews, follow-ups
+- Learning/Intel (5): LeetCode, SQL challenge, tutorials, technical notes, ML/AI deep-dive
+- Finance/Wealth (6): Expense logging, spending discipline, savings transfer, cooking instead of ordering, no coffee shop, side income
+- Focus/Discipline (6): No social media until 12 PM, deep work block, morning routine, evening review, screen time limit, inbox zero, plan tomorrow
 
-**Weekly Quests (6):** 10 job applications, 7 workouts, 5 LeetCode, budget week, 7 deep work sessions, AI mini-project
+**Weekly Quests (18):** 50 job applications/week, 4 workouts/week, 5 LeetCode/week, budget week, 7 deep work sessions, AI mini-project, 5K run, study cert material (5 hrs/week), research companies, read tech book, practice system design, build AI agent, prompt engineering doc, LangChain practice, read AI paper, MLOps task
 
-**Legendary Quests (2):** Mock technical interview, portfolio project feature
+**Custom Quests (7):** Update LinkedIn profile, cancel subscription, fine-tune model, deploy to production, Kaggle submission, mock interview, portfolio feature
 
 ### Dungeons (10)
 Each with 7-day objectives, 700-1300 bonus XP, specific stat rewards.
