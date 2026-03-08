@@ -158,7 +158,12 @@ export function HunterProvider({ children }: { children: ReactNode }) {
       await refreshHunter();
       // Trigger daily reset (streak engine + quest reset) — idempotent, safe to call each session
       try {
-        await fetch("/api/quests/reset", { method: "POST" });
+        const res = await fetch("/api/quests/reset", { method: "POST" });
+        const data = await res.json();
+        // If reset actually ran (not "already reset"), refresh hunter to get updated gold/streak
+        if (data.success) {
+          await refreshHunter();
+        }
       } catch {
         // Silent fail — reset will happen next load
       }

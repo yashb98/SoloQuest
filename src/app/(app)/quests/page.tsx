@@ -124,12 +124,27 @@ export default function QuestsPage() {
     }
   };
 
+  const handleDelete = async (questId: number) => {
+    try {
+      const res = await fetch(`/api/quests?id=${questId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setQuests((prev) => prev.filter((q) => q.id !== questId));
+        addToast({ type: "info", title: "Quest deleted", description: data.deleted, duration: 2500 });
+      }
+    } catch (error) {
+      console.error("Failed to delete quest:", error);
+      addToast({ type: "error", title: "Failed to delete quest" });
+    }
+  };
+
   return (
     <>
       <QuestBoard
         quests={quests}
         onComplete={handleComplete}
         onUndo={handleUndo}
+        onDelete={handleDelete}
         onQuestCreated={fetchQuests}
         loadingQuestId={loadingQuestId}
       />

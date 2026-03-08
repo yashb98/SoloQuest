@@ -43,12 +43,12 @@ export default function StatsPage() {
   }
 
   const radarData = [
-    { stat: "Vitality", value: hunter.vitality, fullMark: 120 },
-    { stat: "Intel", value: hunter.intel, fullMark: 120 },
-    { stat: "Hustle", value: hunter.hustle, fullMark: 120 },
-    { stat: "Wealth", value: hunter.wealth, fullMark: 120 },
-    { stat: "Focus", value: hunter.focus, fullMark: 120 },
-    { stat: "AgentIQ", value: hunter.agentIQ, fullMark: 120 },
+    { stat: "Vitality", value: hunter.vitality, fullMark: 300 },
+    { stat: "Intel", value: hunter.intel, fullMark: 300 },
+    { stat: "Hustle", value: hunter.hustle, fullMark: 300 },
+    { stat: "Wealth", value: hunter.wealth, fullMark: 300 },
+    { stat: "Focus", value: hunter.focus, fullMark: 300 },
+    { stat: "AgentIQ", value: hunter.agentIQ, fullMark: 300 },
   ];
 
   const totalStats = radarData.reduce((sum, s) => sum + s.value, 0);

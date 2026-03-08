@@ -71,9 +71,18 @@ export default function TopBar() {
             <span className="text-[18px]">🔥</span>
             <span className="font-semibold text-[15px] text-sq-accent">{hunter.streak}d</span>
           </div>
-          <div className="flex items-center gap-2 bg-sq-warm px-4 py-2 rounded-full border border-sq-warm-border">
-            <span className="text-[18px]">🪙</span>
-            <span className="font-semibold text-[15px] text-sq-accent">{hunter.gold.toLocaleString()}G</span>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${
+            hunter.gold < 0
+              ? "bg-red-500/10 border-red-500/30"
+              : "bg-sq-warm border-sq-warm-border"
+          }`}>
+            <span className="text-[18px]">{hunter.gold < 0 ? "💀" : "🪙"}</span>
+            <span className={`font-semibold text-[15px] ${
+              hunter.gold < 0 ? "text-red-500" : "text-sq-accent"
+            }`}>
+              {hunter.gold < 0 && "DEBT "}
+              {hunter.gold.toLocaleString()}G
+            </span>
           </div>
         </div>
       </div>

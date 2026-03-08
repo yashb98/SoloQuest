@@ -1,29 +1,15 @@
 // api/quests/route.ts — GET quests filtered by hunter level + POST create custom quest
-// Daily quests auto-reset at the start of each new day
+// Quest resets are handled exclusively by POST /api/quests/reset (called from HunterContext on load)
+// GET is read-only — no side effects, no race conditions
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-function todayStr(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
 export async function GET() {
   const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
   if (!hunter) {
     return NextResponse.json({ error: "Hunter not found" }, { status: 404 });
-  }
-
-  // Auto-reset daily quests if a new day has started
-  const today = todayStr();
-  if (hunter.lastStreakDate !== today) {
-    // Reset all daily quests (mark as incomplete for today)
-    await prisma.quest.updateMany({
-      where: { isDaily: true },
-      data: { isCompleted: false, completedAt: null },
-    });
-    console.log("[Quests] Daily quests auto-reset for", today);
   }
 
   const quests = await prisma.quest.findMany({
@@ -76,4 +62,34 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ success: true, quest });
+}
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const questId = Number(searchParams.get("id"));
+
+  if (!questId) {
+    return NextResponse.json({ error: "Quest ID required" }, { status: 400 });
+  }
+
+  const quest = await prisma.quest.findUnique({ where: { id: questId } });
+  if (!quest) {
+    return NextResponse.json({ error: "Quest not found" }, { status: 404 });
+  }
+
+  // Only allow deleting completed quests
+  if (!quest.isCompleted) {
+    return NextResponse.json(
+      { error: "Can only delete completed quests" },
+      { status: 400 }
+    );
+  }
+
+  // Soft delete — mark as inactive so it won't show up or reset
+  await prisma.quest.update({
+    where: { id: questId },
+    data: { isActive: false },
+  });
+
+  return NextResponse.json({ success: true, deleted: quest.title });
 }

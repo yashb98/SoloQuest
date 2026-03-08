@@ -26,6 +26,7 @@ model Hunter {
   streakFreezes    Int      @default(0) // max 2/month
   lastGracePeriod  String?
   lastStreakDate   String?
+  lastWeeklyReset String?
   lastBriefingDate String?
   wakeUpTime       String   @default("06:30")
   statPoints       Int      @default(0)
@@ -211,6 +212,16 @@ model CertRoadmap {
   isStarted      Boolean   @default(true)
   roadmapId      Int?      // links to JobRoadmap
   createdAt      DateTime  @default(now())
+}
+
+model Penalty {
+  id          Int      @id @default(autoincrement())
+  questId     Int?
+  questTitle  String   @default("")
+  goldLost    Int
+  reason      String   // "quest_failed" | "spending"
+  description String   @default("")
+  createdAt   DateTime @default(now())
 }
 
 model MentorLog {

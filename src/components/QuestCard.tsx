@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Undo2, ChevronDown, Clock, Lightbulb, Star, Wrench, Target } from "lucide-react";
+import { Check, Undo2, ChevronDown, Clock, Lightbulb, Star, Wrench, Target, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { getQuestDetail } from "@/lib/quest-details";
 
@@ -22,6 +22,7 @@ interface QuestCardProps {
   quest: Quest;
   onComplete: (questId: number) => void;
   onUndo: (questId: number) => void;
+  onDelete?: (questId: number) => void;
   isLoading: boolean;
 }
 
@@ -60,7 +61,7 @@ const difficultyConfig: Record<string, { label: string; color: string; stars: nu
   legendary: { label: "Legendary", color: "text-purple-600", stars: 4 },
 };
 
-export default function QuestCard({ quest, onComplete, onUndo, isLoading }: QuestCardProps) {
+export default function QuestCard({ quest, onComplete, onUndo, onDelete, isLoading }: QuestCardProps) {
   const color = categoryColors[quest.category] || { bg: "bg-gray-100", text: "text-gray-600" };
   const [showUndo, setShowUndo] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -136,8 +137,18 @@ export default function QuestCard({ quest, onComplete, onUndo, isLoading }: Ques
           </div>
         </div>
 
-        {/* Right side: expand + complete buttons */}
+        {/* Right side: expand + delete + complete buttons */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Delete button — only after quest is completed */}
+          {quest.isCompleted && onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(quest.id); }}
+              className="w-9 h-9 rounded-full flex items-center justify-center border-[1.5px] border-red-300 bg-white hover:bg-red-50 hover:border-red-400 transition-all"
+              title="Delete quest permanently"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+          )}
           {/* Expand button */}
           {detail && (
             <button

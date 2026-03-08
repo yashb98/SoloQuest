@@ -22,6 +22,7 @@ interface QuestBoardProps {
   quests: Quest[];
   onComplete: (questId: number) => void;
   onUndo: (questId: number) => void;
+  onDelete?: (questId: number) => void;
   onQuestCreated?: () => void;
   loadingQuestId: number | null;
 }
@@ -65,7 +66,7 @@ const STAT_OPTIONS = [
   { key: "agentIQ", label: "Agent IQ (AIQ)" },
 ];
 
-export default function QuestBoard({ quests, onComplete, onUndo, onQuestCreated, loadingQuestId }: QuestBoardProps) {
+export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onQuestCreated, loadingQuestId }: QuestBoardProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeTier, setActiveTier] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -172,7 +173,7 @@ export default function QuestBoard({ quests, onComplete, onUndo, onQuestCreated,
       <div className="flex flex-col gap-3">
         <AnimatePresence mode="popLayout">
           {filteredQuests.map((quest) => (
-            <QuestCard key={quest.id} quest={quest} onComplete={onComplete} onUndo={onUndo} isLoading={loadingQuestId === quest.id} />
+            <QuestCard key={quest.id} quest={quest} onComplete={onComplete} onUndo={onUndo} onDelete={onDelete} isLoading={loadingQuestId === quest.id} />
           ))}
         </AnimatePresence>
         {filteredQuests.length === 0 && (

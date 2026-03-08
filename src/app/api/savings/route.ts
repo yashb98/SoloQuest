@@ -90,11 +90,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Convert £ to gold (£1 = 10 Gold) and deduct from hunter
+    const goldCost = Math.round(amount * 10);
+
     await prisma.spendLog.create({
       data: { category, amount, description },
     });
 
-    return NextResponse.json({ success: true });
+    // Deduct gold (can go negative = debt)
+    await prisma.hunter.update({
+      where: { id: 1 },
+      data: { gold: { decrement: goldCost } },
+    });
+
+    // Log as penalty for tracking
+    await prisma.penalty.create({
+      data: {
+        goldLost: goldCost,
+        reason: "spending",
+        description: `${description} (£${amount.toFixed(2)})`,
+      },
+    });
+
+    const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
+
+    return NextResponse.json({
+      success: true,
+      goldDeducted: goldCost,
+      remainingGold: hunter?.gold ?? 0,
+    });
   }
 
   return NextResponse.json({ error: "Invalid type" }, { status: 400 });

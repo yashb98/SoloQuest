@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Scroll, ShoppingBag, Swords, Trophy, Target,
   Briefcase, GraduationCap, BarChart3, User, Bot, CalendarDays,
-  Timer, Link2, TrendingUp, Map,
+  Timer, Link2, TrendingUp, Map, Skull,
 } from "lucide-react";
 
 const navItems = [
@@ -21,6 +21,7 @@ const navItems = [
   { href: "/applications", icon: Briefcase, label: "Jobs", emoji: "💼" },
   { href: "/achievements", icon: Trophy, label: "Badges", emoji: "🏅" },
   { href: "/certs", icon: GraduationCap, label: "Certs", emoji: "📜" },
+  { href: "/penalties", icon: Skull, label: "Penalties", emoji: "💀" },
   { href: "/shop", icon: ShoppingBag, label: "Shop", emoji: "🛒" },
   { href: "/mentor", icon: Bot, label: "Mentor", emoji: "🧙" },
   { href: "/stats", icon: BarChart3, label: "Stats", emoji: "📊" },
