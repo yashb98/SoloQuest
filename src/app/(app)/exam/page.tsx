@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Clock, Shield, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
-import { GATE_LEVELS } from "@/lib/xp";
+import { GATE_LEVELS, isGateLevel } from "@/lib/xp";
 
 interface Question {
   id: string;
@@ -82,10 +82,11 @@ export default function ExamPage() {
   }, [examState]);
 
   const nextGateLevel = hunter
-    ? GATE_LEVELS.find((g) => g >= hunter.level) ?? null
+    ? GATE_LEVELS.find((g) => g > hunter.level) ?? null
     : null;
+  // Gate-locked = XP is capped at xpToNext AND the next level is a gate level
   const isAtGate = hunter
-    ? GATE_LEVELS.includes(hunter.level as (typeof GATE_LEVELS)[number])
+    ? hunter.xp >= hunter.xpToNext && isGateLevel(hunter.level + 1)
     : false;
 
   const handleStartExam = async () => {

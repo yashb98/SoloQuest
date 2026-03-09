@@ -3,7 +3,9 @@
 import { motion } from "framer-motion";
 import { Moon, Sun } from "lucide-react";
 import { useHunter } from "@/contexts/HunterContext";
+import { isGateLevel } from "@/lib/xp";
 import StatBadge from "./StatBadge";
+import Link from "next/link";
 
 export default function TopBar() {
   const { hunter, loading, darkMode, toggleDarkMode } = useHunter();
@@ -17,6 +19,7 @@ export default function TopBar() {
   }
 
   const xpPct = Math.min((hunter.xp / hunter.xpToNext) * 100, 100);
+  const isGateLocked = hunter.xp >= hunter.xpToNext && isGateLevel(hunter.level + 1);
 
   return (
     <div className="bg-sq-panel border-b border-sq-border sticky top-0 z-30">
@@ -29,7 +32,9 @@ export default function TopBar() {
           <div className="hidden sm:block">
             <div className="flex items-center gap-3">
               <span className="text-lg font-bold text-sq-text tracking-[-0.02em]">{hunter.hunterName}</span>
-              <StatBadge rank={hunter.rank} level={hunter.level} />
+              <Link href="/exam" className={`rounded-full ${isGateLocked ? "animate-pulse ring-2 ring-sq-gold ring-offset-1 ring-offset-sq-panel" : ""}`}>
+                <StatBadge rank={hunter.rank} level={hunter.level} />
+              </Link>
             </div>
             <div className="mt-1 max-w-[300px]">
               {/* Inline XP bar for real-time updates */}

@@ -2,6 +2,7 @@ import TopBar from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
 import MorningBriefing from "@/components/MorningBriefing";
 import ToastContainer from "@/components/ToastContainer";
+import GateExamBanner from "@/components/GateExamBanner";
 import { HunterProvider } from "@/contexts/HunterContext";
 
 export default function AppLayout({
@@ -18,6 +19,7 @@ export default function AppLayout({
         {/* Main content area — offset for sidebar on desktop, bottom nav on mobile */}
         <div className="flex-1 md:ml-[260px] min-h-screen transition-[margin] duration-300">
           <TopBar />
+          <GateExamBanner />
           <div className="px-6 py-8 pb-24 md:pb-8 max-w-[900px] mx-auto">
             <main>{children}</main>
           </div>
