@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Skull, Swords, CreditCard, TrendingDown, AlertTriangle } from "lucide-react";
+import { Skull, Swords, CreditCard, TrendingDown, TrendingUp, AlertTriangle, ArrowUpCircle, Gift } from "lucide-react";
+
+const GAIN_REASONS = ["level_up_bonus"];
 
 interface Penalty {
   id: number;
@@ -17,11 +19,16 @@ interface Penalty {
 interface PenaltyData {
   recent: Penalty[];
   todayPenalties: Penalty[];
+  todayGains: Penalty[];
   todayTotal: number;
+  todayGainTotal: number;
   weeklyTotal: number;
+  weeklyGainTotal: number;
   monthlyTotal: number;
+  monthlyGainTotal: number;
   monthlyFromQuests: number;
   monthlyFromSpending: number;
+  monthlyFromRedeems: number;
   currentGold: number;
   isInDebt: boolean;
   debtAmount: number;
@@ -37,6 +44,9 @@ export default function PenaltiesPage() {
 
   useEffect(() => {
     fetchData();
+    const onDayChange = () => fetchData();
+    window.addEventListener("sq-day-changed", onDayChange);
+    return () => window.removeEventListener("sq-day-changed", onDayChange);
   }, [fetchData]);
 
   if (!data) {
@@ -56,7 +66,7 @@ export default function PenaltiesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">
-          Penalties
+          Gold Ledger
         </h1>
         <div className="flex items-center gap-1.5">
           <Skull className={`w-5 h-5 ${data.isInDebt ? "text-red-500" : "text-sq-muted"}`} />
@@ -87,21 +97,42 @@ export default function PenaltiesPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="sq-panel p-4 space-y-1">
           <p className="text-xs text-sq-muted font-medium uppercase tracking-wide">Today</p>
-          <p className="text-2xl font-bold text-red-500">
-            -{data.todayTotal.toLocaleString()}G
-          </p>
+          <div className="flex items-baseline gap-3">
+            <p className="text-2xl font-bold text-red-500">
+              -{data.todayTotal.toLocaleString()}G
+            </p>
+            {data.todayGainTotal > 0 && (
+              <p className="text-lg font-bold text-emerald-500">
+                +{data.todayGainTotal.toLocaleString()}G
+              </p>
+            )}
+          </div>
         </div>
         <div className="sq-panel p-4 space-y-1">
           <p className="text-xs text-sq-muted font-medium uppercase tracking-wide">This Week</p>
-          <p className="text-2xl font-bold text-red-500">
-            -{data.weeklyTotal.toLocaleString()}G
-          </p>
+          <div className="flex items-baseline gap-3">
+            <p className="text-2xl font-bold text-red-500">
+              -{data.weeklyTotal.toLocaleString()}G
+            </p>
+            {data.weeklyGainTotal > 0 && (
+              <p className="text-lg font-bold text-emerald-500">
+                +{data.weeklyGainTotal.toLocaleString()}G
+              </p>
+            )}
+          </div>
         </div>
         <div className="sq-panel p-4 space-y-1">
           <p className="text-xs text-sq-muted font-medium uppercase tracking-wide">This Month</p>
-          <p className="text-2xl font-bold text-red-500">
-            -{data.monthlyTotal.toLocaleString()}G
-          </p>
+          <div className="flex items-baseline gap-3">
+            <p className="text-2xl font-bold text-red-500">
+              -{data.monthlyTotal.toLocaleString()}G
+            </p>
+            {data.monthlyGainTotal > 0 && (
+              <p className="text-lg font-bold text-emerald-500">
+                +{data.monthlyGainTotal.toLocaleString()}G
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -130,8 +161,56 @@ export default function PenaltiesPage() {
               -{data.monthlyFromSpending.toLocaleString()}G
             </span>
           </div>
+          {data.monthlyFromRedeems > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2 text-sq-muted">
+                <Gift className="w-3.5 h-3.5" />
+                Redeemed
+              </span>
+              <span className="text-red-500 font-medium">
+                -{data.monthlyFromRedeems.toLocaleString()}G
+              </span>
+            </div>
+          )}
+          {data.monthlyGainTotal > 0 && (
+            <div className="flex items-center justify-between text-sm border-t border-sq-border/30 pt-2">
+              <span className="flex items-center gap-2 text-sq-muted">
+                <ArrowUpCircle className="w-3.5 h-3.5 text-emerald-500" />
+                Bonuses Earned
+              </span>
+              <span className="text-emerald-500 font-medium">
+                +{data.monthlyGainTotal.toLocaleString()}G
+              </span>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Today's Gold Gains */}
+      {data.todayGains.length > 0 && (
+        <div className="sq-panel p-4 space-y-3">
+          <h3 className="font-semibold text-sm text-sq-text flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-emerald-500" />
+            Today&apos;s Gold Gains
+          </h3>
+          <div className="space-y-2">
+            {data.todayGains.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between text-xs border-b border-sq-border/30 pb-2"
+              >
+                <div className="flex items-center gap-2">
+                  <ArrowUpCircle className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-sq-text">{p.description}</span>
+                </div>
+                <span className="text-emerald-500 font-medium shrink-0">
+                  +{p.goldLost}G
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Today's Penalties */}
       {data.todayPenalties.length > 0 && (
@@ -148,6 +227,8 @@ export default function PenaltiesPage() {
                 <div className="flex items-center gap-2">
                   {p.reason === "quest_failed" ? (
                     <Swords className="w-3.5 h-3.5 text-red-500" />
+                  ) : p.reason === "custom_redeem" ? (
+                    <Gift className="w-3.5 h-3.5 text-sq-gold" />
                   ) : (
                     <CreditCard className="w-3.5 h-3.5 text-orange-400" />
                   )}
@@ -162,44 +243,51 @@ export default function PenaltiesPage() {
         </div>
       )}
 
-      {/* Penalty History */}
+      {/* Full History (gains + penalties) */}
       <div className="sq-panel p-4 space-y-3">
         <h3 className="font-semibold text-sm text-sq-text">
-          Penalty History
+          History
         </h3>
         {data.recent.length > 0 ? (
           <div className="space-y-2">
-            {data.recent.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center justify-between text-xs border-b border-sq-border/30 pb-2"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    {p.reason === "quest_failed" ? (
-                      <Swords className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                    ) : (
-                      <CreditCard className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                    )}
-                    <span className="text-sq-text truncate">{p.description}</span>
+            {data.recent.map((p) => {
+              const isGain = GAIN_REASONS.includes(p.reason);
+              return (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between text-xs border-b border-sq-border/30 pb-2"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {isGain ? (
+                        <ArrowUpCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                      ) : p.reason === "quest_failed" ? (
+                        <Swords className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                      ) : p.reason === "custom_redeem" ? (
+                        <Gift className="w-3.5 h-3.5 text-sq-gold shrink-0" />
+                      ) : (
+                        <CreditCard className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                      )}
+                      <span className="text-sq-text truncate">{p.description}</span>
+                    </div>
+                    <span className="text-sq-muted text-[10px] ml-5">
+                      {new Date(p.createdAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                   </div>
-                  <span className="text-sq-muted text-[10px] ml-5">
-                    {new Date(p.createdAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                  <span className={`font-medium shrink-0 ml-2 ${isGain ? "text-emerald-500" : "text-red-500"}`}>
+                    {isGain ? "+" : "-"}{p.goldLost}G
                   </span>
                 </div>
-                <span className="text-red-500 font-medium shrink-0 ml-2">
-                  -{p.goldLost}G
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <p className="text-sq-muted text-xs">No penalties yet. Keep it up!</p>
+          <p className="text-sq-muted text-xs">No entries yet.</p>
         )}
       </div>
     </div>

@@ -8,6 +8,7 @@ import { getQuestDetail } from "@/lib/quest-details";
 interface Quest {
   id: number;
   title: string;
+  description: string;
   category: string;
   difficulty: string;
   tier: string;
@@ -67,6 +68,8 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
   const [showUndo, setShowUndo] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const detail = getQuestDetail(quest.title);
+  const hasDescription = !!quest.description?.trim();
+  const hasExpandContent = !!detail || hasDescription;
   const diff = difficultyConfig[quest.difficulty] || difficultyConfig.normal;
 
   const handleClick = () => {
@@ -161,7 +164,7 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
             </button>
           )}
           {/* Expand button */}
-          {detail && (
+          {hasExpandContent && (
             <button
               onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
               className={`w-9 h-9 rounded-full flex items-center justify-center border-[1.5px] border-[#DDD6CE] bg-white hover:border-sq-accent/60 transition-all ${expanded ? "bg-[#FFF3ED] border-sq-accent" : ""}`}
@@ -195,7 +198,7 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
 
       {/* Expandable detail panel */}
       <AnimatePresence>
-        {expanded && detail && (
+        {expanded && hasExpandContent && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -204,67 +207,80 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
             className="overflow-hidden"
           >
             <div className="px-6 pb-5 pt-1 border-t border-sq-border/50 space-y-4">
-              {/* Why it matters */}
-              <div className="bg-[#FFF8F3] rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="w-4 h-4 text-sq-accent" />
-                  <span className="text-[14px] font-bold text-sq-accent">Why This Matters</span>
-                </div>
-                <p className="text-[14px] text-sq-text leading-relaxed">{detail.whyItMatters}</p>
-              </div>
-
-              {/* Step by step */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-5 h-5 rounded-full bg-sq-accent/10 flex items-center justify-center">
-                    <span className="text-[11px] font-bold text-sq-accent">📋</span>
+              {detail ? (
+                <>
+                  {/* Why it matters */}
+                  <div className="bg-[#FFF8F3] rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="w-4 h-4 text-sq-accent" />
+                      <span className="text-[14px] font-bold text-sq-accent">Why This Matters</span>
+                    </div>
+                    <p className="text-[14px] text-sq-text leading-relaxed">{detail.whyItMatters}</p>
                   </div>
-                  <span className="text-[14px] font-bold text-sq-text">Step-by-Step</span>
-                </div>
-                <div className="space-y-2.5 ml-1">
-                  {detail.steps.map((step, i) => (
-                    <div key={i} className="flex gap-3 items-start">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-sq-hover flex items-center justify-center mt-0.5">
-                        <span className="text-[12px] font-bold text-sq-muted">{i + 1}</span>
+
+                  {/* Step by step */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-5 h-5 rounded-full bg-sq-accent/10 flex items-center justify-center">
+                        <span className="text-[11px] font-bold text-sq-accent">📋</span>
                       </div>
-                      <p className="text-[14px] text-sq-text leading-relaxed">{step}</p>
+                      <span className="text-[14px] font-bold text-sq-text">Step-by-Step</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tips */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb className="w-4 h-4 text-yellow-500" />
-                  <span className="text-[14px] font-bold text-sq-text">Pro Tips</span>
-                </div>
-                <div className="space-y-2 ml-1">
-                  {detail.tips.map((tip, i) => (
-                    <div key={i} className="flex gap-2 items-start">
-                      <span className="text-[13px] text-yellow-500 mt-0.5 flex-shrink-0">💡</span>
-                      <p className="text-[13px] text-sq-muted leading-relaxed">{tip}</p>
+                    <div className="space-y-2.5 ml-1">
+                      {detail.steps.map((step, i) => (
+                        <div key={i} className="flex gap-3 items-start">
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-sq-hover flex items-center justify-center mt-0.5">
+                            <span className="text-[12px] font-bold text-sq-muted">{i + 1}</span>
+                          </div>
+                          <p className="text-[14px] text-sq-text leading-relaxed">{step}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              {/* Tools */}
-              {detail.tools && detail.tools.length > 0 && (
-                <div>
+                  {/* Tips */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Lightbulb className="w-4 h-4 text-yellow-500" />
+                      <span className="text-[14px] font-bold text-sq-text">Pro Tips</span>
+                    </div>
+                    <div className="space-y-2 ml-1">
+                      {detail.tips.map((tip, i) => (
+                        <div key={i} className="flex gap-2 items-start">
+                          <span className="text-[13px] text-yellow-500 mt-0.5 flex-shrink-0">💡</span>
+                          <p className="text-[13px] text-sq-muted leading-relaxed">{tip}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tools */}
+                  {detail.tools && detail.tools.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Wrench className="w-4 h-4 text-sq-muted" />
+                        <span className="text-[14px] font-bold text-sq-text">Tools & Resources</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 ml-1">
+                        {detail.tools.map((tool, i) => (
+                          <span key={i} className="bg-sq-hover text-sq-muted px-3 py-1 rounded-full text-[13px] font-medium">
+                            {tool}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : hasDescription ? (
+                /* AI-generated or user-written description fallback */
+                <div className="bg-[#FFF8F3] rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Wrench className="w-4 h-4 text-sq-muted" />
-                    <span className="text-[14px] font-bold text-sq-text">Tools & Resources</span>
+                    <Lightbulb className="w-4 h-4 text-sq-accent" />
+                    <span className="text-[14px] font-bold text-sq-accent">Quest Details</span>
                   </div>
-                  <div className="flex flex-wrap gap-2 ml-1">
-                    {detail.tools.map((tool, i) => (
-                      <span key={i} className="bg-sq-hover text-sq-muted px-3 py-1 rounded-full text-[13px] font-medium">
-                        {tool}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="text-[14px] text-sq-text leading-relaxed whitespace-pre-line">{quest.description}</p>
                 </div>
-              )}
+              ) : null}
             </div>
           </motion.div>
         )}

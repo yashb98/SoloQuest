@@ -23,10 +23,10 @@ export async function GET() {
   });
 
   // Build daily data for heatmap (last 90 days)
-  const heatmapData: Record<string, { date: string; xp: number; quests: number; gold: number }> = {};
+  const heatmapData: Record<string, { date: string; xp: number; quests: number; gold: number; penaltyGold: number }> = {};
   for (let i = 89; i >= 0; i--) {
     const d = daysAgoStr(i);
-    heatmapData[d] = { date: d, xp: 0, quests: 0, gold: 0 };
+    heatmapData[d] = { date: d, xp: 0, quests: 0, gold: 0, penaltyGold: 0 };
   }
 
   for (const c of completions) {
@@ -34,7 +34,19 @@ export async function GET() {
     if (heatmapData[day]) {
       heatmapData[day].xp += c.xpEarned;
       heatmapData[day].quests += 1;
-      heatmapData[day].gold += c.goldEarned;
+      heatmapData[day].gold += c.goldEarned + (c.goldBonus || 0);
+    }
+  }
+
+  // Add penalty data to heatmap days
+  const penalties = await prisma.penalty.findMany({
+    where: { createdAt: { gte: ninetyDaysAgo } },
+    orderBy: { createdAt: "asc" },
+  });
+  for (const p of penalties) {
+    const day = new Date(p.createdAt).toISOString().split("T")[0];
+    if (heatmapData[day]) {
+      heatmapData[day].penaltyGold += p.goldLost;
     }
   }
 
@@ -95,7 +107,7 @@ export async function GET() {
 
   // Totals
   const totalXP = completions.reduce((sum, c) => sum + c.xpEarned, 0);
-  const totalGold = completions.reduce((sum, c) => sum + c.goldEarned, 0);
+  const totalGold = completions.reduce((sum, c) => sum + c.goldEarned + (c.goldBonus || 0), 0);
   const totalQuests = completions.length;
 
   // Best day

@@ -1,8 +1,10 @@
-// api/penalties/route.ts — GET penalty history + summary
+// api/penalties/route.ts — GET penalty history + gold gains summary
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+
+const GAIN_REASONS = ["level_up_bonus"];
 
 export async function GET() {
   const now = new Date();
@@ -16,30 +18,39 @@ export async function GET() {
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
   weekStart.setHours(0, 0, 0, 0);
 
-  // Recent penalties (last 50)
+  // Recent entries (last 50) — both penalties and gains
   const recent = await prisma.penalty.findMany({
     orderBy: { createdAt: "desc" },
     take: 50,
   });
 
-  // Today's penalties
-  const todayPenalties = await prisma.penalty.findMany({
+  // Today's entries
+  const todayEntries = await prisma.penalty.findMany({
     where: {
       createdAt: { gte: todayStart, lt: tomorrowStart },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  // Weekly total
-  const weeklyPenalties = await prisma.penalty.findMany({
+  const todayPenalties = todayEntries.filter((p) => !GAIN_REASONS.includes(p.reason));
+  const todayGains = todayEntries.filter((p) => GAIN_REASONS.includes(p.reason));
+
+  // Weekly totals
+  const weeklyEntries = await prisma.penalty.findMany({
     where: { createdAt: { gte: weekStart } },
   });
-  const weeklyTotal = weeklyPenalties.reduce((sum, p) => sum + p.goldLost, 0);
+  const weeklyTotal = weeklyEntries
+    .filter((p) => !GAIN_REASONS.includes(p.reason))
+    .reduce((sum, p) => sum + p.goldLost, 0);
+  const weeklyGainTotal = weeklyEntries
+    .filter((p) => GAIN_REASONS.includes(p.reason))
+    .reduce((sum, p) => sum + p.goldLost, 0);
 
-  // Monthly total
-  const monthlyPenalties = await prisma.penalty.findMany({
+  // Monthly totals
+  const monthlyEntries = await prisma.penalty.findMany({
     where: { createdAt: { gte: monthStart } },
   });
+  const monthlyPenalties = monthlyEntries.filter((p) => !GAIN_REASONS.includes(p.reason));
   const monthlyTotal = monthlyPenalties.reduce((sum, p) => sum + p.goldLost, 0);
   const monthlyFromQuests = monthlyPenalties
     .filter((p) => p.reason === "quest_failed")
@@ -47,19 +58,31 @@ export async function GET() {
   const monthlyFromSpending = monthlyPenalties
     .filter((p) => p.reason === "spending")
     .reduce((sum, p) => sum + p.goldLost, 0);
+  const monthlyFromRedeems = monthlyPenalties
+    .filter((p) => p.reason === "custom_redeem")
+    .reduce((sum, p) => sum + p.goldLost, 0);
+  const monthlyGainTotal = monthlyEntries
+    .filter((p) => GAIN_REASONS.includes(p.reason))
+    .reduce((sum, p) => sum + p.goldLost, 0);
 
   const todayTotal = todayPenalties.reduce((sum, p) => sum + p.goldLost, 0);
+  const todayGainTotal = todayGains.reduce((sum, p) => sum + p.goldLost, 0);
 
   const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
 
   return NextResponse.json({
     recent,
     todayPenalties,
+    todayGains,
     todayTotal,
+    todayGainTotal,
     weeklyTotal,
+    weeklyGainTotal,
     monthlyTotal,
+    monthlyGainTotal,
     monthlyFromQuests,
     monthlyFromSpending,
+    monthlyFromRedeems,
     currentGold: hunter?.gold ?? 0,
     isInDebt: (hunter?.gold ?? 0) < 0,
     debtAmount: Math.abs(Math.min(0, hunter?.gold ?? 0)),

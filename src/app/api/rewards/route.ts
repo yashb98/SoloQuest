@@ -60,3 +60,52 @@ export async function POST(req: NextRequest) {
     remainingGold: hunter.gold - reward.costGold,
   });
 }
+
+// PUT — Custom gold redemption (redeem any amount)
+export async function PUT(req: NextRequest) {
+  const body = await req.json();
+  const { goldAmount } = body as { goldAmount: number };
+
+  if (!goldAmount || goldAmount <= 0 || !Number.isInteger(goldAmount)) {
+    return NextResponse.json(
+      { error: "goldAmount must be a positive integer" },
+      { status: 400 }
+    );
+  }
+
+  const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
+  if (!hunter) {
+    return NextResponse.json({ error: "Hunter not found" }, { status: 404 });
+  }
+
+  if (hunter.gold < goldAmount) {
+    return NextResponse.json(
+      { error: "Insufficient gold", required: goldAmount, current: hunter.gold },
+      { status: 400 }
+    );
+  }
+
+  const realValue = goldAmount * (hunter.goldToMoneyRatio ?? 0.10);
+
+  // Deduct gold
+  await prisma.hunter.update({
+    where: { id: 1 },
+    data: { gold: { decrement: goldAmount } },
+  });
+
+  // Log in Gold Ledger
+  await prisma.penalty.create({
+    data: {
+      goldLost: goldAmount,
+      reason: "custom_redeem",
+      description: `Custom Redeem: ${goldAmount}G (£${realValue.toFixed(2)})`,
+    },
+  });
+
+  return NextResponse.json({
+    success: true,
+    goldSpent: goldAmount,
+    realValue,
+    remainingGold: hunter.gold - goldAmount,
+  });
+}

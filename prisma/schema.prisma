@@ -50,6 +50,7 @@ model Hunter {
 model Quest {
   id             Int          @id @default(autoincrement())
   title          String
+  description    String       @default("") // AI-generated or user-written quest details
   category       String
   difficulty     String
   tier           String       @default("daily") // daily|weekly|custom
@@ -74,6 +75,7 @@ model Completion {
   quest       Quest    @relation(fields: [questId], references: [id])
   xpEarned    Int
   goldEarned  Int
+  goldBonus   Int      @default(0) // level-up gold bonus awarded at completion
   completedAt DateTime @default(now())
   notes       String?
 }

@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Lock, Check, X, Gift } from "lucide-react";
+import { Coins, Lock, Check, X, Gift, ArrowRight } from "lucide-react";
+import { useHunter } from "@/contexts/HunterContext";
 
 interface Reward {
   id: number;
@@ -16,6 +17,7 @@ interface Reward {
 interface Hunter {
   gold: number;
   rank: string;
+  goldToMoneyRatio: number;
 }
 
 const tierOrder = ["E", "D", "C", "B", "A", "S"];
@@ -28,12 +30,31 @@ const tierColors: Record<string, string> = {
   S: "border-sq-gold/50 text-sq-gold shadow-sq-accent-glow",
 };
 
+const QUICK_AMOUNTS = [50, 100, 250, 500];
+
 export default function ShopPage() {
+  const { hunter: hunterCtx, refreshHunter } = useHunter();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [hunter, setHunter] = useState<Hunter | null>(null);
   const [redeemingId, setRedeemingId] = useState<number | null>(null);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [redeemedReward, setRedeemedReward] = useState<string | null>(null);
+
+  // Custom redeem state
+  const [customAmount, setCustomAmount] = useState<string>("");
+  const [isCustomRedeeming, setIsCustomRedeeming] = useState(false);
+  const [inputMode, setInputMode] = useState<"gold" | "pounds">("pounds");
+
+  // Keep local hunter in sync with context
+  useEffect(() => {
+    if (hunterCtx) {
+      setHunter({
+        gold: hunterCtx.gold,
+        rank: hunterCtx.rank,
+        goldToMoneyRatio: 0.10,
+      });
+    }
+  }, [hunterCtx]);
 
   const fetchData = useCallback(async () => {
     const [rewardsRes, hunterRes] = await Promise.all([
@@ -41,7 +62,8 @@ export default function ShopPage() {
       fetch("/api/hunter"),
     ]);
     setRewards(await rewardsRes.json());
-    setHunter(await hunterRes.json());
+    const h = await hunterRes.json();
+    setHunter({ gold: h.gold, rank: h.rank, goldToMoneyRatio: h.goldToMoneyRatio ?? 0.10 });
   }, []);
 
   useEffect(() => {
@@ -60,8 +82,56 @@ export default function ShopPage() {
       setRedeemedReward(data.reward);
       setShowRedeemModal(true);
       fetchData();
+      refreshHunter(); // sync TopBar gold
     }
     setRedeemingId(null);
+  };
+
+  const ratio = hunter?.goldToMoneyRatio ?? 0.10;
+
+  // Compute gold amount from either mode (always rounds to nearest integer)
+  const goldAmount = inputMode === "gold"
+    ? Math.round(parseFloat(customAmount) || 0)
+    : Math.round((parseFloat(customAmount) || 0) / ratio);
+  const realEquivalent = (goldAmount * ratio).toFixed(2);
+  const canCustomRedeem = goldAmount > 0 && (hunter?.gold ?? 0) >= goldAmount;
+
+  const handleCustomRedeem = async () => {
+    if (!canCustomRedeem || !hunter) return;
+
+    setIsCustomRedeeming(true);
+    const res = await fetch("/api/rewards", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ goldAmount }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const rv = (goldAmount * (hunter.goldToMoneyRatio ?? 0.10)).toFixed(2);
+      setRedeemedReward(`Custom Redeem: ${goldAmount}G (£${rv})`);
+      setShowRedeemModal(true);
+      setCustomAmount("");
+      fetchData();
+      refreshHunter(); // sync TopBar gold
+    }
+    setIsCustomRedeeming(false);
+  };
+
+  const handleModeSwitch = (mode: "gold" | "pounds") => {
+    if (mode === inputMode) return;
+    // Convert current value to the other mode
+    if (customAmount) {
+      if (mode === "pounds") {
+        // gold → pounds
+        const g = parseInt(customAmount) || 0;
+        setCustomAmount(g > 0 ? (g * ratio).toFixed(2) : "");
+      } else {
+        // pounds → gold
+        const p = parseFloat(customAmount) || 0;
+        setCustomAmount(p > 0 ? String(Math.round(p / ratio)) : "");
+      }
+    }
+    setInputMode(mode);
   };
 
   const groupedRewards = tierOrder
@@ -85,6 +155,127 @@ export default function ShopPage() {
             </span>
           </div>
         )}
+      </div>
+
+      {/* Custom Redeem Card */}
+      <div className="sq-panel p-5 border-2 border-sq-gold/30 space-y-4">
+        <div className="flex items-center gap-2">
+          <Gift className="w-5 h-5 text-sq-gold" />
+          <h2 className="font-bold text-lg text-sq-text">Custom Redeem</h2>
+        </div>
+        <p className="text-xs text-sq-muted -mt-2">
+          Redeem any amount of gold you want
+        </p>
+
+        {/* Mode toggle + Quick-select buttons */}
+        <div className="flex items-center gap-2">
+          <div className="flex bg-sq-hover rounded-lg p-0.5 shrink-0">
+            <button
+              onClick={() => handleModeSwitch("gold")}
+              className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-all ${
+                inputMode === "gold"
+                  ? "bg-sq-gold/20 text-sq-gold"
+                  : "text-sq-muted hover:text-sq-text"
+              }`}
+            >
+              Gold
+            </button>
+            <button
+              onClick={() => handleModeSwitch("pounds")}
+              className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-all ${
+                inputMode === "pounds"
+                  ? "bg-sq-green/20 text-sq-green"
+                  : "text-sq-muted hover:text-sq-text"
+              }`}
+            >
+              £
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_AMOUNTS.filter((a) => (hunter?.gold ?? 0) >= a).map((amount) => (
+              <button
+                key={amount}
+                onClick={() =>
+                  setCustomAmount(
+                    inputMode === "gold" ? String(amount) : (amount * ratio).toFixed(2)
+                  )
+                }
+                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all border ${
+                  goldAmount === amount
+                    ? "border-sq-gold bg-sq-gold/10 text-sq-gold"
+                    : "border-sq-border text-sq-muted hover:border-sq-gold/50 hover:text-sq-text"
+                }`}
+              >
+                {inputMode === "gold" ? `${amount}G` : `£${(amount * ratio).toFixed(2)}`}
+              </button>
+            ))}
+            {hunter && hunter.gold > 0 && (
+              <button
+                onClick={() =>
+                  setCustomAmount(
+                    inputMode === "gold"
+                      ? String(hunter.gold)
+                      : (hunter.gold * ratio).toFixed(2)
+                  )
+                }
+                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all border ${
+                  goldAmount === hunter.gold
+                    ? "border-sq-gold bg-sq-gold/10 text-sq-gold"
+                    : "border-sq-border text-sq-muted hover:border-sq-gold/50 hover:text-sq-text"
+                }`}
+              >
+                ALL ({inputMode === "gold" ? `${hunter.gold}G` : `£${(hunter.gold * ratio).toFixed(2)}`})
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Input + preview */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 relative">
+            <input
+              type="number"
+              value={customAmount}
+              onChange={(e) => setCustomAmount(e.target.value)}
+              placeholder={inputMode === "gold" ? "Enter gold amount..." : "Enter £ amount..."}
+              min="0.01"
+              step="0.01"
+              className="w-full bg-sq-hover border border-sq-border rounded-xl px-4 py-2.5 pr-8 text-sm text-sq-text placeholder-sq-muted focus:outline-none focus:border-sq-gold/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold ${
+              inputMode === "gold" ? "text-sq-gold" : "text-sq-green"
+            }`}>
+              {inputMode === "gold" ? "G" : "£"}
+            </span>
+          </div>
+          {goldAmount > 0 && (
+            <div className="flex items-center gap-1.5 text-sm shrink-0">
+              <ArrowRight className="w-4 h-4 text-sq-muted" />
+              {inputMode === "gold" ? (
+                <span className="text-sq-green font-bold">£{realEquivalent}</span>
+              ) : (
+                <span className="text-sq-gold font-bold">{goldAmount}G</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Redeem button */}
+        <button
+          onClick={handleCustomRedeem}
+          disabled={!canCustomRedeem || isCustomRedeeming}
+          className={`w-full py-2.5 rounded-xl text-[14px] font-bold transition-all ${
+            canCustomRedeem
+              ? "sq-button-gold"
+              : "bg-sq-border text-sq-muted cursor-not-allowed"
+          } ${isCustomRedeeming ? "animate-pulse" : ""}`}
+        >
+          {isCustomRedeeming
+            ? "REDEEMING..."
+            : goldAmount > 0
+            ? `REDEEM ${goldAmount}G (£${realEquivalent})`
+            : "REDEEM"}
+        </button>
       </div>
 
       {groupedRewards.map(({ tier, rewards: tierRewards }) => (

@@ -28,25 +28,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Quest is not completed" }, { status: 400 });
     }
 
-    // Calculate what was earned so we can reverse it
-    const xpEarned = effectiveXP(
+    // Find the completion record first — it has the exact amounts to reverse
+    const lastCompletion = await prisma.completion.findFirst({
+      where: { questId },
+      orderBy: { completedAt: "desc" },
+    });
+
+    // Use recorded values if available, otherwise recalculate
+    const xpEarned = lastCompletion?.xpEarned ?? effectiveXP(
       quest.xpBase, hunter.level, hunter.streak,
       hunter.class, quest.statTarget, false
     );
-    const goldEarned = effectiveGold(quest.goldBase, hunter.hustle);
+    const goldEarned = lastCompletion?.goldEarned ?? effectiveGold(quest.goldBase, hunter.hustle);
+    const goldBonus = lastCompletion?.goldBonus ?? 0;
+    const totalGoldToReverse = goldEarned + goldBonus;
 
     // Reverse the stat gain
     const validStats = ["vitality", "intel", "hustle", "wealth", "focus", "agentIQ"];
     const statDecrement: Record<string, number> = {};
     if (validStats.includes(quest.statTarget)) {
       const currentVal = (hunter as Record<string, unknown>)[quest.statTarget] as number;
-      // Don't go below 0
       statDecrement[quest.statTarget] = Math.max(0, currentVal - quest.statGain);
     }
 
-    // Reverse XP — simple subtraction (won't de-level, just reduce XP)
+    // Reverse XP and gold (including level-up bonus)
     const newXP = Math.max(0, hunter.xp - xpEarned);
-    const newGold = Math.max(0, hunter.gold - goldEarned);
+    const newGold = hunter.gold - totalGoldToReverse; // allow negative (debt)
 
     await prisma.hunter.update({
       where: { id: 1 },
@@ -62,11 +69,21 @@ export async function POST(req: NextRequest) {
       data: { isCompleted: false, completedAt: null },
     });
 
-    // Delete the most recent completion record for this quest
-    const lastCompletion = await prisma.completion.findFirst({
-      where: { questId },
-      orderBy: { completedAt: "desc" },
-    });
+    // Decrement DailySnapshot to keep analytics accurate
+    const today = new Date().toISOString().split("T")[0];
+    const existingSnap = await prisma.dailySnapshot.findUnique({ where: { date: today } });
+    if (existingSnap) {
+      await prisma.dailySnapshot.update({
+        where: { date: today },
+        data: {
+          xpEarned: Math.max(0, existingSnap.xpEarned - xpEarned),
+          goldEarned: Math.max(0, existingSnap.goldEarned - totalGoldToReverse),
+          questsCompleted: Math.max(0, existingSnap.questsCompleted - 1),
+        },
+      });
+    }
+
+    // Delete the completion record
     if (lastCompletion) {
       await prisma.completion.delete({ where: { id: lastCompletion.id } });
     }
@@ -75,7 +92,7 @@ export async function POST(req: NextRequest) {
       success: true,
       undone: true,
       xpReversed: xpEarned,
-      goldReversed: goldEarned,
+      goldReversed: totalGoldToReverse,
     });
   }
 
@@ -117,8 +134,21 @@ export async function POST(req: NextRequest) {
   });
 
   await prisma.completion.create({
-    data: { questId, xpEarned, goldEarned, notes: notes || null },
+    data: { questId, xpEarned, goldEarned, goldBonus: levelResult.goldBonus, notes: notes || null },
   });
+
+  // Log level-up gold bonus in penalties section for visibility
+  if (levelResult.goldBonus > 0) {
+    await prisma.penalty.create({
+      data: {
+        questId,
+        questTitle: quest.title,
+        goldLost: levelResult.goldBonus,
+        reason: "level_up_bonus",
+        description: `Level Up to ${levelResult.newRank}-${levelResult.newLevel}: +${levelResult.goldBonus}G bonus`,
+      },
+    });
+  }
 
   // Update DailySnapshot for analytics
   const today = new Date().toISOString().split("T")[0];

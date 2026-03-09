@@ -10,13 +10,16 @@ function todayStr(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-// Get ISO week string (e.g. "2026-W10") for weekly reset tracking
+// Get Sunday-start week string (e.g. "2026-W10") for weekly reset tracking
+// Weeks start on Sunday: Sun=day0 of new week
 function getWeekString(date: Date): string {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+  // Move to the Sunday that starts this week (subtract day-of-week)
+  const sunday = new Date(d);
+  sunday.setUTCDate(sunday.getUTCDate() - sunday.getUTCDay());
+  const yearStart = new Date(Date.UTC(sunday.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((sunday.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${sunday.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
 }
 
 export async function POST() {
@@ -123,8 +126,9 @@ export async function POST() {
   const bestStreak = Math.max(hunter.bestStreak, newStreak);
 
   // --- Penalty for failed daily quests (yesterday's incomplete) ---
+  // Only penalize quests the hunter has unlocked (can actually see & complete)
   const failedDailyQuests = await prisma.quest.findMany({
-    where: { isDaily: true, isCompleted: false, isActive: true },
+    where: { isDaily: true, isCompleted: false, isActive: true, unlocksAtLevel: { lte: hunter.level } },
   });
 
   let questPenalty = 0;
@@ -144,17 +148,17 @@ export async function POST() {
     }
   }
 
-  // --- Penalty for failed weekly quests (end-of-week, Monday) ---
+  // --- Penalty for failed weekly quests (end-of-week, Sunday) ---
   const now = new Date();
   const dayOfWeek = now.getDay();
-  const isNewWeek = dayOfWeek === 1;
+  const isNewWeek = dayOfWeek === 0;
   const currentWeekStr = getWeekString(now);
 
   let weeklyPenalty = 0;
   let failedWeeklyCount = 0;
   if (isNewWeek && hunter.lastWeeklyReset !== currentWeekStr) {
     const failedWeeklyQuests = await prisma.quest.findMany({
-      where: { tier: "weekly", isCompleted: false, isActive: true },
+      where: { tier: "weekly", isCompleted: false, isActive: true, unlocksAtLevel: { lte: hunter.level } },
     });
 
     if (failedWeeklyQuests.length > 0) {

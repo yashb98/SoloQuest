@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { PiggyBank, TrendingUp, CreditCard, Plus } from "lucide-react";
+import { useHunter } from "@/contexts/HunterContext";
 
 interface SavingsData {
   pots: Record<string, number>;
@@ -32,6 +33,7 @@ const spendCategories = [
 ];
 
 export default function SavingsPage() {
+  const { refreshHunter } = useHunter();
   const [data, setData] = useState<SavingsData | null>(null);
   const [showAddSavings, setShowAddSavings] = useState(false);
   const [showAddSpend, setShowAddSpend] = useState(false);
@@ -86,6 +88,7 @@ export default function SavingsPage() {
     setSpendDesc("");
     setShowAddSpend(false);
     fetchData();
+    refreshHunter(); // sync gold in TopBar after spending
   };
 
   if (!data) {

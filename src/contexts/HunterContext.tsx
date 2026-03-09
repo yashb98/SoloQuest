@@ -152,24 +152,49 @@ export function HunterProvider({ children }: { children: ReactNode }) {
     setNewAchievements([]);
   }, []);
 
+  // Daily reset runner — extracted so we can call it on init + midnight
+  const runDailyReset = useCallback(async () => {
+    try {
+      const res = await fetch("/api/quests/reset", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        await refreshHunter();
+      }
+    } catch {
+      // Silent fail — reset will happen next load
+    }
+  }, [refreshHunter]);
+
   // Initial fetch + daily quest reset
   useEffect(() => {
     const init = async () => {
       await refreshHunter();
-      // Trigger daily reset (streak engine + quest reset) — idempotent, safe to call each session
-      try {
-        const res = await fetch("/api/quests/reset", { method: "POST" });
-        const data = await res.json();
-        // If reset actually ran (not "already reset"), refresh hunter to get updated gold/streak
-        if (data.success) {
-          await refreshHunter();
-        }
-      } catch {
-        // Silent fail — reset will happen next load
-      }
+      await runDailyReset();
     };
     init();
-  }, [refreshHunter]);
+  }, [refreshHunter, runDailyReset]);
+
+  // Midnight auto-refresh: schedule a timer for 00:00:01 to trigger daily reset + data refresh
+  useEffect(() => {
+    const scheduleMidnightRefresh = () => {
+      const now = new Date();
+      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+      const msUntilMidnight = tomorrow.getTime() - now.getTime();
+
+      return setTimeout(async () => {
+        // Day has changed — run daily reset and refresh all data
+        await runDailyReset();
+        await refreshHunter();
+        // Dispatch a custom event so any page can listen and re-fetch its data
+        window.dispatchEvent(new CustomEvent("sq-day-changed"));
+        // Re-schedule for the next midnight
+        timerRef = scheduleMidnightRefresh();
+      }, msUntilMidnight);
+    };
+
+    let timerRef = scheduleMidnightRefresh();
+    return () => clearTimeout(timerRef);
+  }, [runDailyReset, refreshHunter]);
 
   return (
     <HunterContext.Provider

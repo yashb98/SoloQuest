@@ -8,6 +8,7 @@ import QuestCard from "./QuestCard";
 interface Quest {
   id: number;
   title: string;
+  description: string;
   category: string;
   difficulty: string;
   tier: string;
@@ -23,7 +24,6 @@ interface QuestBoardProps {
   onComplete: (questId: number) => void;
   onUndo: (questId: number) => void;
   onDelete?: (questId: number) => void;
-  onEdit?: (quest: Quest, updates: Partial<Quest>) => void;
   onQuestCreated?: () => void;
   loadingQuestId: number | null;
 }
@@ -67,7 +67,7 @@ const STAT_OPTIONS = [
   { key: "agentIQ", label: "Agent IQ (AIQ)" },
 ];
 
-export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onEdit, onQuestCreated, loadingQuestId }: QuestBoardProps) {
+export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onQuestCreated, loadingQuestId }: QuestBoardProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeTier, setActiveTier] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -201,9 +201,9 @@ export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onEdi
           <EditQuestModal
             quest={editingQuest}
             onClose={() => setEditingQuest(null)}
-            onSaved={(updates) => {
-              onEdit?.(editingQuest, updates);
+            onSaved={() => {
               setEditingQuest(null);
+              onQuestCreated?.(); // re-fetch quests from server
             }}
           />
         )}
@@ -249,7 +249,7 @@ function AddQuestModal({ onClose, onCreated }: { onClose: () => void; onCreated:
       const res = await fetch("/api/quests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), category, difficulty, tier, xpBase, goldBase, statTarget, statGain: 1 }),
+        body: JSON.stringify({ title: title.trim(), description: aiPreview, category, difficulty, tier, xpBase, goldBase, statTarget, statGain: 1 }),
       });
       const data = await res.json();
       if (data.success) onCreated();
@@ -389,7 +389,7 @@ function AddQuestModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 }
 
 // --- Edit Quest Modal ---
-function EditQuestModal({ quest, onClose, onSaved }: { quest: Quest; onClose: () => void; onSaved: (updates: Partial<Quest>) => void }) {
+function EditQuestModal({ quest, onClose, onSaved }: { quest: Quest; onClose: () => void; onSaved: () => void }) {
   const [title, setTitle] = useState(quest.title);
   const [category, setCategory] = useState(quest.category);
   const [difficulty, setDifficulty] = useState(quest.difficulty);
@@ -398,22 +398,47 @@ function EditQuestModal({ quest, onClose, onSaved }: { quest: Quest; onClose: ()
   const [xpBase, setXpBase] = useState(quest.xpBase);
   const [goldBase, setGoldBase] = useState(quest.goldBase);
   const [saving, setSaving] = useState(false);
+  const [aiPreview, setAiPreview] = useState(quest.description || "");
+  const [aiGenerating, setAiGenerating] = useState(false);
+
+  const [error, setError] = useState("");
+
+  const handleAiGenerate = async () => {
+    if (!title.trim()) return;
+    setAiGenerating(true);
+    try {
+      const res = await fetch("/api/ai/generate-task-details", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim(), category, type: "quest" }),
+      });
+      const data = await res.json();
+      setAiPreview(data.description || "");
+    } catch {
+      setAiPreview("");
+    }
+    setAiGenerating(false);
+  };
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
     setSaving(true);
+    setError("");
     try {
       const res = await fetch("/api/quests", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: quest.id, title: title.trim(), category, difficulty, tier, xpBase, goldBase, statTarget }),
+        body: JSON.stringify({ id: quest.id, title: title.trim(), description: aiPreview, category, difficulty, tier, xpBase, goldBase, statTarget }),
       });
       const data = await res.json();
       if (data.success) {
-        onSaved({ title: title.trim(), category, difficulty, tier, xpBase, goldBase, statTarget });
+        onSaved();
+      } else {
+        setError(data.error || "Failed to save changes");
       }
     } catch (e) {
       console.error("Failed to edit quest:", e);
+      setError("Network error — could not save");
     } finally {
       setSaving(false);
     }
@@ -437,14 +462,35 @@ function EditQuestModal({ quest, onClose, onSaved }: { quest: Quest; onClose: ()
           </button>
         </div>
 
-        {/* Title */}
+        {/* Title + AI Generate */}
         <div>
-          <label className="text-[13px] font-semibold text-sq-text block mb-1.5">Quest Title</label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-[13px] font-semibold text-sq-text">Quest Title</label>
+            <button onClick={handleAiGenerate} disabled={!title.trim() || aiGenerating}
+              className="flex items-center gap-1 text-[12px] font-semibold text-sq-accent hover:text-sq-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {aiGenerating ? "Generating..." : "AI Specs"}
+            </button>
+          </div>
           <input
             type="text" value={title} onChange={(e) => setTitle(e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[14px] text-sq-text placeholder:text-sq-muted/50 focus:outline-none focus:border-sq-accent"
           />
         </div>
+
+        {/* AI Generated Preview */}
+        {aiPreview && (
+          <div className="p-3 rounded-xl bg-sq-hover/50 border border-sq-accent/20">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-sq-accent" />
+              <span className="text-[12px] font-bold text-sq-accent">AI-Generated Specifications</span>
+            </div>
+            <pre className="text-[13px] text-sq-text whitespace-pre-wrap font-sans leading-relaxed">
+              {aiPreview}
+            </pre>
+          </div>
+        )}
 
         {/* Category + Difficulty */}
         <div className="grid grid-cols-2 gap-3">
@@ -514,6 +560,10 @@ function EditQuestModal({ quest, onClose, onSaved }: { quest: Quest; onClose: ()
             />
           </div>
         </div>
+
+        {error && (
+          <p className="text-red-500 text-[13px] font-medium bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+        )}
 
         <button onClick={handleSubmit} disabled={!title.trim() || saving}
           className="sq-button-gold w-full text-[14px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"

@@ -8,15 +8,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
-  if (!hunter) {
-    return NextResponse.json({ error: "Hunter not found" }, { status: 404 });
-  }
+  const hunterLevel = hunter?.level ?? 1;
 
   const quests = await prisma.quest.findMany({
-    where: {
-      isActive: true,
-      unlocksAtLevel: { lte: hunter.level },
-    },
+    where: { isActive: true, unlocksAtLevel: { lte: hunterLevel } },
     orderBy: [{ isCompleted: "asc" }, { difficulty: "desc" }, { id: "asc" }],
   });
 
@@ -25,8 +20,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { title, category, difficulty, tier, xpBase, goldBase, statTarget, statGain } = body as {
+  const { title, description, category, difficulty, tier, xpBase, goldBase, statTarget, statGain } = body as {
     title: string;
+    description?: string;
     category: string;
     difficulty: string;
     tier: string;
@@ -48,6 +44,7 @@ export async function POST(req: NextRequest) {
   const quest = await prisma.quest.create({
     data: {
       title,
+      description: description || "",
       category: validCategories.includes(category) ? category : "focus",
       difficulty: validDifficulties.includes(difficulty) ? difficulty : "normal",
       tier: validTiers.includes(tier) ? tier : "custom",
@@ -66,9 +63,10 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const body = await req.json();
-  const { id, title, category, difficulty, tier, xpBase, goldBase, statTarget, statGain } = body as {
+  const { id, title, description, category, difficulty, tier, xpBase, goldBase, statTarget, statGain } = body as {
     id: number;
     title?: string;
+    description?: string;
     category?: string;
     difficulty?: string;
     tier?: string;
@@ -94,6 +92,7 @@ export async function PUT(req: NextRequest) {
 
   const data: Record<string, unknown> = {};
   if (title !== undefined) data.title = title;
+  if (description !== undefined) data.description = description;
   if (category !== undefined && validCategories.includes(category)) data.category = category;
   if (difficulty !== undefined && validDifficulties.includes(difficulty)) data.difficulty = difficulty;
   if (tier !== undefined && validTiers.includes(tier)) {

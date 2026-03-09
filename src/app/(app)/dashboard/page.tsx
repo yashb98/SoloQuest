@@ -15,6 +15,7 @@ import { useHunter } from "@/contexts/HunterContext";
 interface Quest {
   id: number;
   title: string;
+  description: string;
   category: string;
   difficulty: string;
   tier: string;
@@ -95,6 +96,10 @@ export default function DashboardPage() {
     fetchQuests();
     fetchDashboard();
     fetchRoadmap();
+    // Re-fetch everything when day changes at midnight
+    const onDayChange = () => { fetchQuests(); fetchDashboard(); fetchRoadmap(); };
+    window.addEventListener("sq-day-changed", onDayChange);
+    return () => window.removeEventListener("sq-day-changed", onDayChange);
   }, [fetchQuests, fetchDashboard, fetchRoadmap]);
 
   const handleCompleteQuest = async (questId: number) => {

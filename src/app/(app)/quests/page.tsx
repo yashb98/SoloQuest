@@ -9,6 +9,7 @@ import { useHunter } from "@/contexts/HunterContext";
 interface Quest {
   id: number;
   title: string;
+  description: string;
   category: string;
   difficulty: string;
   tier: string;
@@ -23,6 +24,7 @@ interface CompletionReward {
   questTitle: string;
   xpEarned: number;
   goldEarned: number;
+  levelUpGoldBonus: number;
   statGain: number;
   statTarget: string;
   didLevelUp: boolean;
@@ -47,6 +49,10 @@ export default function QuestsPage() {
 
   useEffect(() => {
     fetchQuests();
+    // Re-fetch quests when day changes at midnight
+    const onDayChange = () => fetchQuests();
+    window.addEventListener("sq-day-changed", onDayChange);
+    return () => window.removeEventListener("sq-day-changed", onDayChange);
   }, [fetchQuests]);
 
   const handleComplete = async (questId: number) => {
@@ -79,6 +85,7 @@ export default function QuestsPage() {
           questTitle: quest?.title || "Quest",
           xpEarned: data.xpEarned,
           goldEarned: data.goldEarned,
+          levelUpGoldBonus: data.levelUpGoldBonus || 0,
           statGain: data.statGain,
           statTarget: data.statTarget,
           didLevelUp: data.didLevelUp,
@@ -138,13 +145,6 @@ export default function QuestsPage() {
     }
   };
 
-  const handleEdit = async (quest: Quest, updates: Partial<Quest>) => {
-    setQuests((prev) =>
-      prev.map((q) => (q.id === quest.id ? { ...q, ...updates } : q))
-    );
-    addToast({ type: "info", title: "Quest updated", description: updates.title || quest.title, duration: 2500 });
-  };
-
   return (
     <>
       <QuestBoard
@@ -152,7 +152,6 @@ export default function QuestsPage() {
         onComplete={handleComplete}
         onUndo={handleUndo}
         onDelete={handleDelete}
-        onEdit={handleEdit}
         onQuestCreated={fetchQuests}
         loadingQuestId={loadingQuestId}
       />
@@ -199,7 +198,9 @@ export default function QuestsPage() {
                   </div>
                   <div className="flex items-center gap-1.5 bg-[#FFFBEB] px-3 py-1.5 rounded-full">
                     <Coins className="w-4 h-4 text-sq-gold" />
-                    <span className="text-[14px] font-bold text-sq-gold">+{completionReward.goldEarned} G</span>
+                    <span className="text-[14px] font-bold text-sq-gold">
+                      +{completionReward.goldEarned + completionReward.levelUpGoldBonus} G
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 bg-[#F0FDF4] px-3 py-1.5 rounded-full">
                     <TrendingUp className="w-4 h-4 text-sq-green" />
@@ -217,7 +218,7 @@ export default function QuestsPage() {
                     className="mt-3 text-center py-2 rounded-xl bg-gradient-to-r from-sq-accent/10 to-sq-gold/10 border border-sq-accent/30"
                   >
                     <p className="text-[14px] font-bold text-sq-accent">
-                      🎉 Level Up! {completionReward.newRank}-{completionReward.newLevel}
+                      🎉 Level Up! {completionReward.newRank}-{completionReward.newLevel} (+{completionReward.levelUpGoldBonus}G Bonus)
                     </p>
                   </motion.div>
                 )}

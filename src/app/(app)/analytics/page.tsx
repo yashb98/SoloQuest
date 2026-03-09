@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, ResponsiveContainer,
   Tooltip, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis,
@@ -11,8 +11,16 @@ import {
   Calendar,
 } from "lucide-react";
 
+interface HeatmapDay {
+  date: string;
+  xp: number;
+  quests: number;
+  gold: number;
+  penaltyGold: number;
+}
+
 interface AnalyticsData {
-  heatmap: Array<{ date: string; xp: number; quests: number; gold: number }>;
+  heatmap: HeatmapDay[];
   weeklyTrend: Array<{ week: string; xp: number; quests: number }>;
   categoryBreakdown: Record<string, { count: number; xp: number }>;
   statDistribution: Record<string, number>;
@@ -48,6 +56,9 @@ const STAT_LABELS: Record<string, string> = {
 export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hoveredDay, setHoveredDay] = useState<HeatmapDay | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     const res = await fetch("/api/analytics");
@@ -97,6 +108,46 @@ export default function AnalyticsPage() {
     "bg-sq-accent",
   ];
 
+  // Build Sunday-start weekly grid from heatmap data
+  const heatmapMap: Record<string, HeatmapDay> = {};
+  for (const day of data.heatmap) {
+    heatmapMap[day.date] = day;
+  }
+
+  // Find the earliest date and pad back to the previous Sunday
+  const sortedDates = data.heatmap.map((d) => d.date).sort();
+  const firstDate = new Date(sortedDates[0] + "T12:00:00");
+  const startDow = firstDate.getDay(); // 0=Sun
+  const gridStart = new Date(firstDate);
+  gridStart.setDate(gridStart.getDate() - startDow); // roll back to Sunday
+
+  // Find last date and pad forward to Saturday
+  const lastDate = new Date(sortedDates[sortedDates.length - 1] + "T12:00:00");
+  const endDow = lastDate.getDay();
+  const gridEnd = new Date(lastDate);
+  gridEnd.setDate(gridEnd.getDate() + (6 - endDow)); // roll forward to Saturday
+
+  // Build weeks array (each week = 7 days, Sun-Sat)
+  const weeks: (HeatmapDay | null)[][] = [];
+  const cursor = new Date(gridStart);
+  while (cursor <= gridEnd) {
+    const week: (HeatmapDay | null)[] = [];
+    for (let d = 0; d < 7; d++) {
+      const dateStr = cursor.toISOString().split("T")[0];
+      week.push(heatmapMap[dateStr] || null);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+
+  const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Format date for tooltip
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr + "T12:00:00");
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-[32px] font-bold text-sq-text tracking-[-0.03em]">Analytics</h1>
@@ -131,22 +182,49 @@ export default function AnalyticsPage() {
           <Calendar className="w-4 h-4 text-sq-accent" />
           <span className="text-[14px] font-bold text-sq-text">Activity Heatmap (90 days)</span>
         </div>
-        <div className="flex flex-wrap gap-[3px]">
-          {data.heatmap.map((day) => {
-            const level = getHeatLevel(day.xp);
-            return (
-              <div
-                key={day.date}
-                className={`w-[11px] h-[11px] rounded-[2px] ${heatColors[level]} transition-colors`}
-                title={`${day.date}: ${day.xp} XP, ${day.quests} quests`}
-              />
-            );
-          })}
+        <div className="overflow-x-auto">
+          <div className="flex gap-[3px]">
+            {/* Day labels column */}
+            <div className="flex flex-col gap-[3px] mr-1 flex-shrink-0">
+              {DAY_LABELS.map((label, i) => (
+                <div key={i} className="h-[13px] flex items-center">
+                  {i % 2 === 0 ? (
+                    <span className="text-[9px] text-sq-muted leading-none w-[22px]">{label}</span>
+                  ) : (
+                    <span className="w-[22px]" />
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Week columns */}
+            {weeks.map((week, wi) => (
+              <div key={wi} className="flex flex-col gap-[3px]">
+                {week.map((day, di) => {
+                  if (!day) {
+                    return <div key={di} className="w-[13px] h-[13px]" />;
+                  }
+                  const level = getHeatLevel(day.xp);
+                  return (
+                    <div
+                      key={di}
+                      className={`w-[13px] h-[13px] rounded-[2px] ${heatColors[level]} transition-colors cursor-pointer hover:ring-1 hover:ring-sq-accent`}
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top });
+                        setHoveredDay(day);
+                      }}
+                      onMouseLeave={() => setHoveredDay(null)}
+                    />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
         <div className="flex items-center gap-2 mt-3">
           <span className="text-[11px] text-sq-muted">Less</span>
           {heatColors.map((color, i) => (
-            <div key={i} className={`w-[11px] h-[11px] rounded-[2px] ${color}`} />
+            <div key={i} className={`w-[13px] h-[13px] rounded-[2px] ${color}`} />
           ))}
           <span className="text-[11px] text-sq-muted">More</span>
         </div>
@@ -249,6 +327,37 @@ export default function AnalyticsPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* ─── Fixed Heatmap Tooltip (floats over entire screen) ─── */}
+      {hoveredDay && (
+        <div
+          ref={tooltipRef}
+          className="fixed z-[999] pointer-events-none"
+          style={{
+            left: tooltipPos.x,
+            top: tooltipPos.y - 10,
+            transform: "translate(-50%, -100%)",
+          }}
+        >
+          <div className="bg-[#1A1A2E] text-white rounded-lg px-3.5 py-2.5 text-[11px] whitespace-nowrap shadow-xl border border-white/10 min-w-[160px]">
+            <p className="font-semibold text-[12px] mb-1.5">{formatDate(hoveredDay.date)}</p>
+            <div className="space-y-1">
+              <p><span className="text-sq-accent font-medium">+{hoveredDay.xp} XP</span> · {hoveredDay.quests} quests</p>
+              {hoveredDay.gold > 0 && (
+                <p className="text-yellow-400">+{hoveredDay.gold} G earned</p>
+              )}
+              {hoveredDay.penaltyGold > 0 && (
+                <p className="text-red-400">-{hoveredDay.penaltyGold} G penalty</p>
+              )}
+              {hoveredDay.gold === 0 && hoveredDay.penaltyGold === 0 && hoveredDay.xp === 0 && (
+                <p className="text-gray-400">No activity</p>
+              )}
+            </div>
+            {/* Arrow */}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-[#1A1A2E]" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
