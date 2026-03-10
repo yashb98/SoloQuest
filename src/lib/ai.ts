@@ -810,3 +810,41 @@ Rules:
 
   return aiCall(prompt, undefined, 4000, true);
 }
+
+// --- Quest Checklist Generation ---
+export async function generateQuestChecklist(
+  title: string,
+  category: string,
+  difficulty: string,
+  description?: string,
+  customInstructions?: string
+): Promise<string> {
+  const stepRange =
+    difficulty === "legendary" ? "5-7" : difficulty === "hard" ? "4-6" : "3-5";
+
+  const customBlock = customInstructions?.trim()
+    ? `\n\nIMPORTANT — The user wants the checklist generated with these specific instructions:\n"${customInstructions.trim().slice(0, 300)}"\nFollow these instructions closely when creating the steps.`
+    : "";
+
+  const prompt = `You are a productivity coach breaking a quest into actionable checklist items.
+Return ONLY valid JSON — no markdown, no preamble.
+
+Quest: "${title}"
+Category: ${category}
+Difficulty: ${difficulty}${description ? `\nContext: ${description.slice(0, 200)}` : ""}${customBlock}
+
+Return a JSON array of ${stepRange} specific, actionable steps. Each step should be completable in one sitting.
+Format:
+[
+  {"id": "1", "text": "First specific action step", "done": false},
+  {"id": "2", "text": "Second specific action step", "done": false}
+]
+
+Rules:
+- Each step must be a concrete action, not vague
+- Steps should be in logical order
+- Use plain text, no markdown or emojis
+- IDs must be unique strings ("1", "2", etc.)`;
+
+  return aiCall(prompt, undefined, 500, true);
+}

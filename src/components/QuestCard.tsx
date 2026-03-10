@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Undo2, ChevronDown, Clock, Lightbulb, Star, Wrench, Target, Trash2, Pencil } from "lucide-react";
+import { Check, Undo2, ChevronDown, Clock, Lightbulb, Star, Wrench, Target, Trash2, Pencil, CheckSquare, Square, RefreshCw, Loader2, ListChecks, Sparkles, MessageSquare, Send } from "lucide-react";
 import { useState } from "react";
 import { getQuestDetail } from "@/lib/quest-details";
 
@@ -9,6 +9,7 @@ interface Quest {
   id: number;
   title: string;
   description: string;
+  checklist: string;
   category: string;
   difficulty: string;
   tier: string;
@@ -19,12 +20,19 @@ interface Quest {
   isCompleted: boolean;
 }
 
+interface ChecklistItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
 interface QuestCardProps {
   quest: Quest;
   onComplete: (questId: number) => void;
   onUndo: (questId: number) => void;
   onDelete?: (questId: number) => void;
   onEdit?: (quest: Quest) => void;
+  onChecklistUpdate?: (questId: number, checklist: string) => void;
   isLoading: boolean;
 }
 
@@ -63,14 +71,28 @@ const difficultyConfig: Record<string, { label: string; color: string; stars: nu
   legendary: { label: "Legendary", color: "text-purple-600", stars: 4 },
 };
 
-export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit, isLoading }: QuestCardProps) {
+export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit, onChecklistUpdate, isLoading }: QuestCardProps) {
   const color = categoryColors[quest.category] || { bg: "bg-gray-100", text: "text-gray-600" };
   const [showUndo, setShowUndo] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customPrompt, setCustomPrompt] = useState("");
   const detail = getQuestDetail(quest.title);
   const hasDescription = !!quest.description?.trim();
-  const hasExpandContent = !!detail || hasDescription;
   const diff = difficultyConfig[quest.difficulty] || difficultyConfig.normal;
+
+  // Parse checklist
+  const checklistItems: ChecklistItem[] = (() => {
+    try {
+      const parsed = JSON.parse(quest.checklist || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
+  const hasChecklist = checklistItems.length > 0;
+  const checkedCount = checklistItems.filter((i) => i.done).length;
 
   const handleClick = () => {
     if (quest.isCompleted) {
@@ -78,6 +100,46 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
     } else {
       onComplete(quest.id);
     }
+  };
+
+  const handleToggleItem = (itemId: string) => {
+    const updated = checklistItems.map((item) =>
+      item.id === itemId ? { ...item, done: !item.done } : item
+    );
+    const newJson = JSON.stringify(updated);
+    onChecklistUpdate?.(quest.id, newJson);
+  };
+
+  const handleGenerate = async (customInstructions?: string) => {
+    setIsRegenerating(true);
+    try {
+      const res = await fetch("/api/ai/generate-quest-checklist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questId: quest.id,
+          title: quest.title,
+          category: quest.category,
+          difficulty: quest.difficulty,
+          description: quest.description,
+          ...(customInstructions?.trim() ? { customInstructions: customInstructions.trim() } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onChecklistUpdate?.(quest.id, data.checklistJson);
+        setShowCustomInput(false);
+        setCustomPrompt("");
+      }
+    } catch (err) {
+      console.error("Failed to generate checklist:", err);
+    }
+    setIsRegenerating(false);
+  };
+
+  const handleCustomSubmit = () => {
+    if (!customPrompt.trim()) return;
+    handleGenerate(customPrompt);
   };
 
   return (
@@ -125,7 +187,7 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
             {quest.title}
           </h3>
 
-          {/* Rewards */}
+          {/* Rewards + checklist progress */}
           <div className="flex gap-4 mt-[10px] flex-wrap items-center">
             <span className="text-[15px] font-semibold text-sq-accent">+{quest.xpBase} XP</span>
             <span className="text-[15px] font-semibold text-sq-gold">+{quest.goldBase} G</span>
@@ -136,6 +198,12 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
               <span className="flex items-center gap-1 text-[13px] text-sq-muted">
                 <Clock className="w-3 h-3" />
                 {detail.estimatedTime}
+              </span>
+            )}
+            {hasChecklist && (
+              <span className={`flex items-center gap-1.5 text-[13px] font-semibold ${checkedCount === checklistItems.length ? "text-sq-green" : "text-sq-muted"}`}>
+                <ListChecks className="w-3.5 h-3.5" />
+                {checkedCount}/{checklistItems.length}
               </span>
             )}
           </div>
@@ -163,16 +231,14 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
               <Trash2 className="w-4 h-4 text-red-400" />
             </button>
           )}
-          {/* Expand button */}
-          {hasExpandContent && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className={`w-9 h-9 rounded-full flex items-center justify-center border-[1.5px] border-[#DDD6CE] bg-white hover:border-sq-accent/60 transition-all ${expanded ? "bg-[#FFF3ED] border-sq-accent" : ""}`}
-              title="View details"
-            >
-              <ChevronDown className={`w-4 h-4 text-sq-muted transition-transform ${expanded ? "rotate-180 text-sq-accent" : ""}`} />
-            </button>
-          )}
+          {/* Expand button — always show now (checklist can be generated even without detail/description) */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+            className={`w-9 h-9 rounded-full flex items-center justify-center border-[1.5px] border-[#DDD6CE] bg-white hover:border-sq-accent/60 transition-all ${expanded ? "bg-[#FFF3ED] border-sq-accent" : ""}`}
+            title="View details"
+          >
+            <ChevronDown className={`w-4 h-4 text-sq-muted transition-transform ${expanded ? "rotate-180 text-sq-accent" : ""}`} />
+          </button>
           {/* Complete / Undo button */}
           <button
             onClick={handleClick}
@@ -198,7 +264,7 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
 
       {/* Expandable detail panel */}
       <AnimatePresence>
-        {expanded && hasExpandContent && (
+        {expanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -281,6 +347,119 @@ export default function QuestCard({ quest, onComplete, onUndo, onDelete, onEdit,
                   <p className="text-[14px] text-sq-text leading-relaxed whitespace-pre-line">{quest.description}</p>
                 </div>
               ) : null}
+
+              {/* Checklist section */}
+              {hasChecklist && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <ListChecks className="w-4 h-4 text-sq-accent" />
+                      <span className="text-[14px] font-bold text-sq-text">
+                        Checklist ({checkedCount}/{checklistItems.length})
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleGenerate()}
+                      disabled={isRegenerating}
+                      className="flex items-center gap-1 text-[12px] font-semibold text-sq-muted hover:text-sq-accent transition-colors disabled:opacity-50"
+                    >
+                      {isRegenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                      Regenerate
+                    </button>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="h-2 bg-sq-hover rounded-full mb-3 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-sq-accent to-sq-green rounded-full transition-all duration-300"
+                      style={{ width: `${checklistItems.length > 0 ? (checkedCount / checklistItems.length) * 100 : 0}%` }}
+                    />
+                  </div>
+                  {/* Checklist items */}
+                  <div className="space-y-2">
+                    {checklistItems.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleToggleItem(item.id)}
+                        className="flex items-start gap-3 w-full text-left group"
+                      >
+                        {item.done ? (
+                          <CheckSquare className="w-5 h-5 text-sq-accent flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <Square className="w-5 h-5 text-sq-muted group-hover:text-sq-accent flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className={`text-[14px] leading-relaxed ${item.done ? "text-sq-muted line-through" : "text-sq-text"}`}>
+                          {item.text}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Generate checklist options (when no checklist exists yet) */}
+              {!hasChecklist && !isRegenerating && !showCustomInput && (
+                <div className="space-y-3">
+                  <p className="text-[13px] font-semibold text-sq-text">Generate Checklist</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleGenerate()}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-[1.5px] border-sq-accent bg-sq-accent/5 text-[13px] font-semibold text-sq-accent hover:bg-sq-accent/10 transition-colors"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Auto Generate
+                    </button>
+                    <button
+                      onClick={() => setShowCustomInput(true)}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-[1.5px] border-sq-border text-[13px] font-semibold text-sq-text hover:border-sq-accent/50 hover:bg-sq-hover transition-colors"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Custom
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Custom instructions input */}
+              {!hasChecklist && showCustomInput && !isRegenerating && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[13px] font-semibold text-sq-text">Describe how to break this quest down</p>
+                    <button
+                      onClick={() => { setShowCustomInput(false); setCustomPrompt(""); }}
+                      className="text-[12px] text-sq-muted hover:text-sq-text transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={customPrompt}
+                      onChange={(e) => setCustomPrompt(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleCustomSubmit()}
+                      placeholder="e.g., Focus on coding tasks only, 30 min each..."
+                      className="flex-1 px-4 py-2.5 rounded-xl border-[1.5px] border-sq-border bg-white text-[13px] text-sq-text placeholder:text-sq-muted/50 focus:outline-none focus:border-sq-accent"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleCustomSubmit}
+                      disabled={!customPrompt.trim()}
+                      className="px-4 py-2.5 rounded-xl bg-sq-accent text-white text-[13px] font-semibold hover:bg-sq-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      Generate
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Generating state */}
+              {!hasChecklist && isRegenerating && (
+                <div className="flex items-center gap-2 text-[13px] font-semibold text-sq-accent">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating checklist...
+                </div>
+              )}
             </div>
           </motion.div>
         )}

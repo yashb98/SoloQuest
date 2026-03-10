@@ -63,10 +63,11 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const body = await req.json();
-  const { id, title, description, category, difficulty, tier, xpBase, goldBase, statTarget, statGain } = body as {
+  const { id, title, description, checklist, category, difficulty, tier, xpBase, goldBase, statTarget, statGain } = body as {
     id: number;
     title?: string;
     description?: string;
+    checklist?: string;
     category?: string;
     difficulty?: string;
     tier?: string;
@@ -93,6 +94,7 @@ export async function PUT(req: NextRequest) {
   const data: Record<string, unknown> = {};
   if (title !== undefined) data.title = title;
   if (description !== undefined) data.description = description;
+  if (checklist !== undefined) data.checklist = checklist;
   if (category !== undefined && validCategories.includes(category)) data.category = category;
   if (difficulty !== undefined && validDifficulties.includes(difficulty)) data.difficulty = difficulty;
   if (tier !== undefined && validTiers.includes(tier)) {

@@ -10,6 +10,7 @@ interface Quest {
   id: number;
   title: string;
   description: string;
+  checklist: string;
   category: string;
   difficulty: string;
   tier: string;
@@ -131,6 +132,23 @@ export default function QuestsPage() {
     }
   };
 
+  const handleChecklistUpdate = async (questId: number, checklist: string) => {
+    // Optimistic local update
+    setQuests((prev) =>
+      prev.map((q) => (q.id === questId ? { ...q, checklist } : q))
+    );
+    // Persist to DB
+    try {
+      await fetch("/api/quests", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: questId, checklist }),
+      });
+    } catch (err) {
+      console.error("Failed to save checklist:", err);
+    }
+  };
+
   const handleDelete = async (questId: number) => {
     try {
       const res = await fetch(`/api/quests?id=${questId}`, { method: "DELETE" });
@@ -153,6 +171,7 @@ export default function QuestsPage() {
         onUndo={handleUndo}
         onDelete={handleDelete}
         onQuestCreated={fetchQuests}
+        onChecklistUpdate={handleChecklistUpdate}
         loadingQuestId={loadingQuestId}
       />
 

@@ -9,6 +9,7 @@ interface Quest {
   id: number;
   title: string;
   description: string;
+  checklist: string;
   category: string;
   difficulty: string;
   tier: string;
@@ -25,6 +26,7 @@ interface QuestBoardProps {
   onUndo: (questId: number) => void;
   onDelete?: (questId: number) => void;
   onQuestCreated?: () => void;
+  onChecklistUpdate?: (questId: number, checklist: string) => void;
   loadingQuestId: number | null;
 }
 
@@ -67,7 +69,7 @@ const STAT_OPTIONS = [
   { key: "agentIQ", label: "Agent IQ (AIQ)" },
 ];
 
-export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onQuestCreated, loadingQuestId }: QuestBoardProps) {
+export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onQuestCreated, onChecklistUpdate, loadingQuestId }: QuestBoardProps) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeTier, setActiveTier] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -175,7 +177,7 @@ export default function QuestBoard({ quests, onComplete, onUndo, onDelete, onQue
       <div className="flex flex-col gap-3">
         <AnimatePresence mode="popLayout">
           {filteredQuests.map((quest) => (
-            <QuestCard key={quest.id} quest={quest} onComplete={onComplete} onUndo={onUndo} onDelete={onDelete} onEdit={(q) => setEditingQuest(q)} isLoading={loadingQuestId === quest.id} />
+            <QuestCard key={quest.id} quest={quest} onComplete={onComplete} onUndo={onUndo} onDelete={onDelete} onEdit={(q) => setEditingQuest(q)} onChecklistUpdate={onChecklistUpdate} isLoading={loadingQuestId === quest.id} />
           ))}
         </AnimatePresence>
         {filteredQuests.length === 0 && (
@@ -252,7 +254,23 @@ function AddQuestModal({ onClose, onCreated }: { onClose: () => void; onCreated:
         body: JSON.stringify({ title: title.trim(), description: aiPreview, category, difficulty, tier, xpBase, goldBase, statTarget, statGain: 1 }),
       });
       const data = await res.json();
-      if (data.success) onCreated();
+      if (data.success) {
+        // Fire-and-forget: generate checklist in background
+        if (data.quest?.id) {
+          fetch("/api/ai/generate-quest-checklist", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              questId: data.quest.id,
+              title: title.trim(),
+              category,
+              difficulty,
+              description: aiPreview,
+            }),
+          }).catch(() => {});
+        }
+        onCreated();
+      }
     } catch (e) {
       console.error("Failed to create quest:", e);
     } finally {

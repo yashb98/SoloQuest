@@ -16,6 +16,7 @@ interface Quest {
   id: number;
   title: string;
   description: string;
+  checklist: string;
   category: string;
   difficulty: string;
   tier: string;

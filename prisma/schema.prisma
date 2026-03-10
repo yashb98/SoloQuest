@@ -51,6 +51,7 @@ model Quest {
   id             Int          @id @default(autoincrement())
   title          String
   description    String       @default("") // AI-generated or user-written quest details
+  checklist      String       @default("[]") // JSON: [{id, text, done}]
   category       String
   difficulty     String
   tier           String       @default("daily") // daily|weekly|custom
