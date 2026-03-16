@@ -1,0 +1,358 @@
+// Solo Quest — Full Gamification Blueprint Schema
+// All 11 steps from the blueprint integrated
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Hunter {
+  id               Int      @id @default(1)
+  hunterName       String   @default("Yash")
+  class            String   @default("none") // warrior|scholar|rogue|paladin|none
+  title            String   @default("Newcomer")
+  rank             String   @default("E")
+  level            Int      @default(1)
+  xp               Int      @default(0)
+  xpToNext         Int      @default(115)
+  gold             Int      @default(0)
+  streak           Int      @default(0)
+  bestStreak       Int      @default(0)
+  streakShields    Int      @default(0) // max 3
+  streakFreezes    Int      @default(0) // max 2/month
+  lastGracePeriod  String?
+  lastStreakDate   String?
+  lastWeeklyReset String?
+  lastBriefingDate String?
+  wakeUpTime       String   @default("06:30")
+  statPoints       Int      @default(0)
+  // 6 Core Stats (Blueprint Step 3)
+  vitality         Int      @default(0)
+  intel            Int      @default(0)
+  hustle           Int      @default(0)
+  wealth           Int      @default(0)
+  focus            Int      @default(0)
+  agentIQ          Int      @default(0)
+  // Financial
+  goldToMoneyRatio Float    @default(0.10)
+  // Prestige
+  prestigeCount    Int      @default(0)
+  // Job Roadmap
+  activeRoadmapId  Int?     // points to active JobRoadmap.id
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Quest {
+  id             Int          @id @default(autoincrement())
+  title          String
+  description    String       @default("") // AI-generated or user-written quest details
+  checklist      String       @default("[]") // JSON: [{id, text, done}]
+  category       String
+  difficulty     String
+  tier           String       @default("daily") // daily|weekly|custom
+  xpBase         Int
+  goldBase       Int
+  statTarget     String
+  statGain       Int          @default(1)
+  isDaily        Boolean      @default(true)
+  isActive       Boolean      @default(true)
+  isCompleted    Boolean      @default(false)
+  completedAt    DateTime?
+  unlocksAtLevel Int          @default(1)
+  dungeonId      Int?
+  roadmapId      Int?         // links to JobRoadmap for roadmap-generated quests
+  createdAt      DateTime     @default(now())
+  completions    Completion[]
+}
+
+model Completion {
+  id          Int      @id @default(autoincrement())
+  questId     Int
+  quest       Quest    @relation(fields: [questId], references: [id])
+  xpEarned    Int
+  goldEarned  Int
+  goldBonus   Int      @default(0) // level-up gold bonus awarded at completion
+  completedAt DateTime @default(now())
+  notes       String?
+}
+
+model Reward {
+  id           Int       @id @default(autoincrement())
+  title        String
+  tier         String
+  costGold     Int
+  realCost     Float
+  category     String    @default("general")
+  isCustom     Boolean   @default(false)
+  isRepeatable Boolean   @default(false)
+  isUnlocked   Boolean   @default(false)
+  isRedeemed   Boolean   @default(false)
+  redeemedAt   DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model Dungeon {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  objectives  String
+  bonusXP     Int
+  bonusGold   Int
+  statReward  String
+  statAmount  Int       @default(6)
+  isActive    Boolean   @default(false)
+  isCompleted Boolean   @default(false)
+  isFailed    Boolean   @default(false)
+  activatedAt DateTime?
+  deadline    DateTime?
+  completedAt DateTime?
+  roadmapId   Int?      // links to JobRoadmap for roadmap-generated dungeons
+  createdAt   DateTime  @default(now())
+}
+
+model Exam {
+  id            Int       @id @default(autoincrement())
+  gateLevel     Int
+  type          String
+  questionsJson String
+  score         Int?
+  passed        Boolean   @default(false)
+  attemptNum    Int       @default(1)
+  xpAwarded     Int       @default(0)
+  takenAt       DateTime?
+  nextAllowed   DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model Briefing {
+  id        Int      @id @default(autoincrement())
+  content   String
+  date      String
+  createdAt DateTime @default(now())
+}
+
+model SavingsLog {
+  id       Int      @id @default(autoincrement())
+  pot      String
+  amount   Float
+  action   String
+  note     String?
+  loggedAt DateTime @default(now())
+}
+
+model SpendLog {
+  id          Int      @id @default(autoincrement())
+  category    String
+  amount      Float
+  description String
+  spentAt     DateTime @default(now())
+}
+
+model Achievement {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String
+  category    String
+  requirement String
+  checkType   String
+  checkValue  Int       @default(0)
+  xpReward    Int       @default(0)
+  goldReward  Int       @default(0)
+  titleReward String?
+  rarity      String    @default("Common")
+  isUnlocked  Boolean   @default(false)
+  unlockedAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Goal {
+  id          Int       @id @default(autoincrement())
+  type        String
+  title       String
+  description String    @default("")
+  targetDate  DateTime?
+  xpReward    Int       @default(200)
+  goldReward  Int       @default(100)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  roadmapId   Int?      // links to JobRoadmap
+  createdAt   DateTime  @default(now())
+}
+
+model Application {
+  id            Int       @id @default(autoincrement())
+  company       String
+  role          String
+  link          String    @default("")
+  status        String    @default("discovered")
+  salaryRange   String?
+  contactPerson String?
+  notes         String?
+  resumeVersion String?
+  dateApplied   DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+}
+
+model CertRoadmap {
+  id             Int       @id @default(autoincrement())
+  certName       String
+  provider       String
+  startDate      DateTime  @default(now())
+  targetExamDate DateTime?
+  totalWeeks     Int       @default(8)
+  currentWeek    Int       @default(1)
+  weeklyHours    Int       @default(10)
+  goldBonus      Int       @default(2000)
+  isPassed       Boolean   @default(false)
+  passedAt       DateTime?
+  studyPlan      String    @default("[]") // JSON: [{week, topics: [{title, description, youtubeUrl?, blogUrl?, isCompleted}]}]
+  isStarted      Boolean   @default(true)
+  roadmapId      Int?      // links to JobRoadmap
+  createdAt      DateTime  @default(now())
+}
+
+model Penalty {
+  id          Int      @id @default(autoincrement())
+  questId     Int?
+  questTitle  String   @default("")
+  goldLost    Int
+  reason      String   // "quest_failed" | "spending"
+  description String   @default("")
+  createdAt   DateTime @default(now())
+}
+
+model MentorLog {
+  id        Int      @id @default(autoincrement())
+  prompt    String
+  response  String
+  feature   String   @default("chat")
+  createdAt DateTime @default(now())
+}
+
+model TodoItem {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @default("") // AI-generated steps/specs
+  date        String   // YYYY-MM-DD format - the date this todo is for
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  priority    Int      @default(0) // 0=normal, 1=high, 2=critical
+  sortOrder   Int      @default(0) // for drag-and-drop reordering
+  category    String   @default("general") // general, health, learning, jobs, finance, focus
+  isRecurring Boolean  @default(false) // recurring task flag
+  recurType   String?  // daily|weekly|weekdays|custom
+  recurDays   String?  // JSON array of days e.g. ["mon","wed","fri"]
+  roadmapId   Int?     // links to JobRoadmap
+  certId      Int?     // links to CertRoadmap for study plan todos
+  createdAt   DateTime @default(now())
+}
+
+// Quest Chains — linked quest sequences
+model QuestChain {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String    @default("")
+  totalSteps  Int       @default(0)
+  currentStep Int       @default(0)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  xpBonus     Int       @default(0) // bonus XP for completing entire chain
+  goldBonus   Int       @default(0)
+  roadmapId   Int?      // links to JobRoadmap
+  createdAt   DateTime  @default(now())
+}
+
+model QuestChainStep {
+  id          Int       @id @default(autoincrement())
+  chainId     Int
+  stepOrder   Int
+  title       String
+  category    String    @default("focus")
+  difficulty  String    @default("normal")
+  xpBase      Int       @default(50)
+  goldBase    Int       @default(10)
+  statTarget  String    @default("focus")
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+// Time tracking sessions
+model TimeSession {
+  id          Int       @id @default(autoincrement())
+  questId     Int?      // optional link to a quest
+  todoId      Int?      // optional link to a todo
+  label       String    @default("Focus Session")
+  duration    Int       // planned duration in minutes
+  elapsed     Int       @default(0) // actual elapsed seconds
+  isCompleted Boolean   @default(false)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+}
+
+// Job Roadmap — career path with AI-generated game content
+model JobRoadmap {
+  id              Int       @id @default(autoincrement())
+  targetRole      String    // e.g. "ML Engineer", "Full Stack Developer"
+  experienceLevel String    @default("beginner") // beginner|intermediate|senior
+  skills          String    @default("[]") // JSON array of skill strings
+  timeline        String    @default("6m") // 3m|6m|1y
+  isActive        Boolean   @default(true)
+  milestones      String    @default("[]") // JSON: [{title, description, weekNumber, isCompleted}]
+  summary         String    @default("")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Analytics daily snapshot for heatmap and trends
+model DailySnapshot {
+  id               Int    @id @default(autoincrement())
+  date             String @unique // YYYY-MM-DD
+  xpEarned         Int    @default(0)
+  goldEarned       Int    @default(0)
+  questsCompleted  Int    @default(0)
+  todosCompleted   Int    @default(0)
+  minutesFocused   Int    @default(0) // from time tracking
+  streakDay        Int    @default(0)
+}
+
+// --- Agent System Models ---
+
+// Logs every AI agent execution
+model AgentRun {
+  id          Int      @id @default(autoincrement())
+  agentName   String   // "steps", "screen_time", "expense", "todo", "quest", etc.
+  eventType   String   // "health_sync", "screen_time_update", "notification", "periodic_check"
+  input       String   @default("{}") // JSON: incoming event data
+  output      String   @default("{}") // JSON: actions taken
+  status      String   @default("success") // success | error
+  durationMs  Int      @default(0)
+  traceId     String?  // Langfuse trace ID for cross-referencing
+  createdAt   DateTime @default(now())
+}
+
+// Raw device data from mobile (steps, screen time, notifications)
+model DeviceData {
+  id          Int       @id @default(autoincrement())
+  dataType    String    // "steps", "screen_time", "notification", "sleep", "calendar"
+  value       String    // JSON payload from device
+  date        String    // YYYY-MM-DD
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+// Per-agent configuration (enabled/disabled, thresholds, schedules)
+model AgentConfig {
+  id        Int     @id @default(autoincrement())
+  agentName String  @unique
+  enabled   Boolean @default(true)
+  config    String  @default("{}") // JSON: {stepGoal: 10000, screenTimeLimit: 120, spendBudget: 50, ...}
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}

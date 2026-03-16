@@ -1,10 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cat /Users/yashbishnoi/SoloQuest/src/app/\\\\\\(app\\\\\\)/quests/page.tsx)"
+      "Bash(cat /Users/yashbishnoi/SoloQuest/src/app/\\\\\\(app\\\\\\)/quests/page.tsx)",
+      "Bash(grep -n \"alert\\(\" /Users/yashbishnoi/SoloQuest/src/app/\\\\\\(app\\\\\\)/**/page.tsx)",
+      "Bash(grep -r \"LangGraph\\\\|Langfuse\\\\|agent\\\\|orchestr\" /Users/yashbishnoi/SoloQuest/src --include=*.ts --include=*.tsx --include=*.js --include=*.json)",
+      "Bash(ls -la /Users/yashbishnoi/SoloQuest/src/app/\\\\\\(app\\\\\\))",
+      "Bash(cat /Users/yashbishnoi/SoloQuest/src/app/\\\\\\(app\\\\\\)/dashboard/page.tsx)",
+      "Bash(grep -r \"agent\\\\|Agent\\\\|LangGraph\\\\|langfuse\\\\|Langfuse\\\\|agentic\\\\|orchestr\" /Users/yashbishnoi/SoloQuest/src/app/api --include=*.ts)",
+      "Bash(ls -la /Users/yashbishnoi/SoloQuest/src/app/\\\\\\(app\\\\\\)/dashboard)",
+      "Bash(cat /Users/yashbishnoi/SoloQuest/src/app/\\\\\\(app\\\\\\)/layout.tsx)",
+      "Bash(grep -v \"^$\")"
     ],
     "additionalDirectories": [
-      "/Users/yashbishnoi/SoloQuest/.claude"
+      "/Users/yashbishnoi/SoloQuest/.claude",
+      "/Users/yashbishnoi/SoloQuest/.claude/skills"
     ]
   },
   "hooks": {
