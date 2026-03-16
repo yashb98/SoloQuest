@@ -40,9 +40,9 @@ export default function TopBar() {
               {/* Inline XP bar for real-time updates */}
               <div className="w-full">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[13px] font-medium text-sq-muted">{hunter.rank}-{hunter.rankLevel} </span>
+                  <span className="text-[13px] font-medium text-sq-muted">XP</span>
                   <span className="text-[13px] font-medium text-sq-muted">
-                    - ({hunter.xp.toLocaleString()} / {hunter.xpToNext.toLocaleString()} XP)
+                    {hunter.xp.toLocaleString()} / {hunter.xpToNext.toLocaleString()}
                   </span>
                 </div>
                 <div className="h-2 bg-sq-hover rounded-full overflow-hidden">

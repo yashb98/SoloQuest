@@ -1,21 +1,45 @@
-"""Steps Agent — auto-complete health quests based on step count from HealthKit/Google Fit."""
+"""Steps Agent — update health quest progress bars from step count (HealthKit/Google Fit)."""
 import json
-from langchain_core.messages import SystemMessage, HumanMessage
 from ..state import AgentState
-from ..llm.router import invoke_with_fallback
 from ..tools import soloquest_api as api
 
 
+# Step thresholds for common quest titles
+STEP_TARGETS = {
+    "walk": 8000,
+    "step": 10000,
+    "10k": 10000,
+    "10,000": 10000,
+    "8k": 8000,
+    "8,000": 8000,
+    "5k": 5000,
+    "5,000": 5000,
+    "15k": 15000,
+    "15,000": 15000,
+}
+
+
+def _guess_step_target(title: str) -> int:
+    """Guess the step target from quest title."""
+    lower = title.lower()
+    for keyword, target in STEP_TARGETS.items():
+        if keyword in lower:
+            return target
+    # Default: if it mentions steps/walk, assume 8000
+    if any(w in lower for w in ["step", "walk", "hike", "run"]):
+        return 8000
+    return 0
+
+
 async def steps_node(state: AgentState) -> AgentState:
-    """Process step count data and auto-complete matching health quests."""
+    """Update health quest progress bars with current step count."""
     event_data = state["event_data"]
     steps = event_data.get("steps", 0)
-    active_minutes = event_data.get("activeMinutes", 0)
     quests = state.get("active_quests", [])
     actions = list(state.get("actions_taken", []))
     notifications = list(state.get("notifications", []))
 
-    # Filter health quests that aren't completed
+    # Filter active, incomplete health quests
     health_quests = [
         q for q in quests
         if q.get("category") == "health"
@@ -23,59 +47,59 @@ async def steps_node(state: AgentState) -> AgentState:
         and q.get("isActive")
     ]
 
-    if not health_quests:
+    if not health_quests or steps <= 0:
         return {**state, "actions_taken": actions, "notifications": notifications, "done": True}
 
-    # Use LLM to match step count against quest requirements
-    quest_titles = [{"id": q["id"], "title": q["title"]} for q in health_quests]
-    messages = [
-        SystemMessage(content="""You match step count and activity data against health quest requirements.
-Given step count and active minutes, determine which quests are completed.
-Reply with a JSON array of quest IDs that should be auto-completed.
-Only include quests where the data clearly meets the requirement.
-Example: [5, 12] or [] if none match."""),
-        HumanMessage(content=f"Steps today: {steps}\nActive minutes: {active_minutes}\nHealth quests: {json.dumps(quest_titles)}"),
-    ]
-
-    response = await invoke_with_fallback("steps_agent", messages)
-
-    # Parse completed quest IDs
-    completed_ids = []
-    try:
-        cleaned = response.strip()
-        if cleaned.startswith("["):
-            completed_ids = json.loads(cleaned)
-    except (json.JSONDecodeError, ValueError):
-        pass
-
-    # Auto-complete matched quests
-    for quest_id in completed_ids:
-        quest = next((q for q in health_quests if q["id"] == quest_id), None)
-        if not quest:
+    for quest in health_quests:
+        target = quest.get("progressTarget", 0)
+        if target <= 0:
+            target = _guess_step_target(quest["title"])
+        if target <= 0:
             continue
 
         try:
-            result = await api.complete_quest(quest_id, notes=f"Auto-completed by Steps Agent: {steps} steps")
-            actions.append({
-                "type": "complete_quest",
-                "agent": "steps_agent",
-                "data": {"quest_id": quest_id, "quest_title": quest["title"], "steps": steps, "xp_earned": result.get("xpEarned", 0)},
-                "reason": f"{steps} steps meets requirement for '{quest['title']}'",
-                "undoable": True,
-            })
-            notifications.append({
-                "title": f"Quest Completed: {quest['title']}",
-                "body": f"Steps Agent auto-completed — {steps} steps today! +{result.get('xpEarned', 0)} XP",
-                "priority": "immediate",
-                "agent": "steps_agent",
-            })
-        except Exception:
-            pass  # Graceful degradation
+            result = await api.update_quest_progress(
+                quest_id=quest["id"],
+                progress_current=steps,
+                progress_target=target,
+                progress_unit="steps",
+            )
 
-    # Nudge if step goal not met and it's getting late
-    if not completed_ids and steps < 8000:
+            auto_completed = result.get("autoCompleted", False)
+            updated = result.get("quest", {})
+            progress = updated.get("progress", 0)
+
+            actions.append({
+                "type": "update_progress" if not auto_completed else "complete_quest",
+                "agent": "steps_agent",
+                "data": {
+                    "quest_id": quest["id"],
+                    "quest_title": quest["title"],
+                    "steps": steps,
+                    "target": target,
+                    "progress": progress,
+                    "auto_completed": auto_completed,
+                },
+                "reason": f"{steps:,}/{target:,} steps ({progress}%) for '{quest['title']}'",
+                "undoable": auto_completed,
+            })
+
+            if auto_completed:
+                rewards = result.get("rewards", {})
+                notifications.append({
+                    "title": f"Quest Complete: {quest['title']}",
+                    "body": f"{steps:,} steps! +{rewards.get('xp', 0)} XP, +{rewards.get('gold', 0)}g",
+                    "priority": "immediate",
+                    "agent": "steps_agent",
+                })
+        except Exception:
+            pass
+
+    # Nudge if no quest hit 100%
+    any_completed = any(a.get("data", {}).get("auto_completed") for a in actions)
+    if not any_completed and steps < 8000:
         remaining = 8000 - steps
-        walk_min = remaining // 130  # ~130 steps per minute walking
+        walk_min = remaining // 130
         notifications.append({
             "title": f"{remaining:,} steps to go",
             "body": f"A {walk_min} min walk would do it!",

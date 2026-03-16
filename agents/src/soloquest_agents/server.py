@@ -195,17 +195,107 @@ async def daily_focus(req: DailyFocusRequest):
     return await run_agent("daily_focus", {"focus": req.focus, "date": datetime.now().strftime("%Y-%m-%d")})
 
 
+# --- Remaining scheduled/triggered endpoints ---
+
+@app.post("/agents/notion-sync")
+async def notion_sync():
+    return await run_agent("notion_sync", {"trigger": "daily_journal", "date": datetime.now().strftime("%Y-%m-%d")})
+
+@app.post("/agents/learning-check")
+async def learning_check():
+    return await run_agent("learning_check", {"date": datetime.now().strftime("%Y-%m-%d")})
+
+@app.post("/agents/streak-check")
+async def streak_check():
+    return await run_agent("streak_check", {"date": datetime.now().strftime("%Y-%m-%d")})
+
+@app.post("/agents/quest-optimization")
+async def quest_optimization():
+    return await run_agent("quest_optimization", {"date": datetime.now().strftime("%Y-%m-%d")})
+
+@app.post("/agents/social-check")
+async def social_check():
+    return await run_agent("social_check", {"date": datetime.now().strftime("%Y-%m-%d")})
+
+
+class CalendarSyncRequest(BaseModel):
+    events: list = []
+    date: str = ""
+
+@app.post("/agents/calendar-sync")
+async def calendar_sync(req: CalendarSyncRequest):
+    date = req.date or datetime.now().strftime("%Y-%m-%d")
+    data = req.model_dump()
+    data["date"] = date
+    await api.push_device_data("calendar", json.dumps(data), date)
+    return await run_agent("calendar_sync", data)
+
+
 # --- Management endpoints ---
 
 @app.get("/agents/status")
 async def agent_status():
     """Get health check and last run time per agent."""
-    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+    return {
+        "status": "ok",
+        "timestamp": datetime.now().isoformat(),
+        "agents": [
+            "steps", "screen_time", "expense", "todo", "quest",
+            "streak_guardian", "sleep", "weekly_strategist", "daily_focus",
+            "notion_sync", "adaptive_learning", "calendar", "social_accountability",
+        ],
+    }
 
 @app.get("/agents/actions")
 async def agent_actions(limit: int = 50):
-    """Get recent agent actions."""
-    return await api.get_agent_configs()  # TODO: return agent runs
+    """Get recent agent run history."""
+    try:
+        from .tools import soloquest_api
+        runs = await soloquest_api._client.get(f"/api/agent-runs?limit={limit}")
+        return runs.json()
+    except Exception:
+        return []
+
+class UndoRequest(BaseModel):
+    runId: int
+    actionIndex: int = 0
+
+@app.post("/agents/actions/undo")
+async def undo_action(req: UndoRequest):
+    """Undo a specific agent action (e.g., quest completion)."""
+    try:
+        from .tools import soloquest_api
+        runs_res = await soloquest_api._client.get(f"/api/agent-runs?limit=100")
+        runs = runs_res.json()
+        run = next((r for r in runs if r["id"] == req.runId), None)
+        if not run:
+            raise HTTPException(status_code=404, detail="Agent run not found")
+
+        output = json.loads(run.get("output", "{}"))
+        action_list = output.get("actions", [])
+        if req.actionIndex >= len(action_list):
+            raise HTTPException(status_code=400, detail="Action index out of range")
+
+        action = action_list[req.actionIndex]
+        if not action.get("undoable"):
+            raise HTTPException(status_code=400, detail="Action is not undoable")
+
+        # Undo based on action type
+        if action["type"] == "complete_quest":
+            quest_id = action["data"]["quest_id"]
+            await api.undo_quest(quest_id)
+            return {"success": True, "undone": action}
+
+        raise HTTPException(status_code=400, detail=f"Undo not implemented for action type: {action['type']}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/agents/config")
+async def get_config():
+    """Get all agent configs."""
+    return await api.get_agent_configs()
 
 @app.get("/")
 async def root():

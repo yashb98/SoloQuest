@@ -48,26 +48,32 @@ model Hunter {
 }
 
 model Quest {
-  id             Int          @id @default(autoincrement())
-  title          String
-  description    String       @default("") // AI-generated or user-written quest details
-  checklist      String       @default("[]") // JSON: [{id, text, done}]
-  category       String
-  difficulty     String
-  tier           String       @default("daily") // daily|weekly|custom
-  xpBase         Int
-  goldBase       Int
-  statTarget     String
-  statGain       Int          @default(1)
-  isDaily        Boolean      @default(true)
-  isActive       Boolean      @default(true)
-  isCompleted    Boolean      @default(false)
-  completedAt    DateTime?
-  unlocksAtLevel Int          @default(1)
-  dungeonId      Int?
-  roadmapId      Int?         // links to JobRoadmap for roadmap-generated quests
-  createdAt      DateTime     @default(now())
-  completions    Completion[]
+  id              Int          @id @default(autoincrement())
+  title           String
+  description     String       @default("") // AI-generated or user-written quest details
+  checklist       String       @default("[]") // JSON: [{id, text, done}]
+  category        String
+  difficulty      String
+  tier            String       @default("daily") // daily|weekly|custom
+  xpBase          Int
+  goldBase        Int
+  statTarget      String
+  statGain        Int          @default(1)
+  isDaily         Boolean      @default(true)
+  isActive        Boolean      @default(true)
+  isCompleted     Boolean      @default(false)
+  completedAt     DateTime?
+  unlocksAtLevel  Int          @default(1)
+  dungeonId       Int?
+  roadmapId       Int?         // links to JobRoadmap for roadmap-generated quests
+  // Progress tracking — agents fill this incrementally
+  progress        Int          @default(0)   // 0-100 percentage
+  progressCurrent Float        @default(0)   // current value (e.g. 6500 steps)
+  progressTarget  Float        @default(0)   // target value (e.g. 10000 steps)
+  progressUnit    String       @default("")  // "steps", "minutes", "pages", "£", ""
+  autoComplete    Boolean      @default(false) // auto-complete when progress hits 100%
+  createdAt       DateTime     @default(now())
+  completions     Completion[]
 }
 
 model Completion {
@@ -236,21 +242,28 @@ model MentorLog {
 }
 
 model TodoItem {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String   @default("") // AI-generated steps/specs
-  date        String   // YYYY-MM-DD format - the date this todo is for
-  isCompleted Boolean  @default(false)
-  completedAt DateTime?
-  priority    Int      @default(0) // 0=normal, 1=high, 2=critical
-  sortOrder   Int      @default(0) // for drag-and-drop reordering
-  category    String   @default("general") // general, health, learning, jobs, finance, focus
-  isRecurring Boolean  @default(false) // recurring task flag
-  recurType   String?  // daily|weekly|weekdays|custom
-  recurDays   String?  // JSON array of days e.g. ["mon","wed","fri"]
-  roadmapId   Int?     // links to JobRoadmap
-  certId      Int?     // links to CertRoadmap for study plan todos
-  createdAt   DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String   @default("") // AI-generated steps/specs
+  date            String   // YYYY-MM-DD format - the date this todo is for
+  isCompleted     Boolean  @default(false)
+  completedAt     DateTime?
+  priority        Int      @default(0) // 0=normal, 1=high, 2=critical
+  sortOrder       Int      @default(0) // for drag-and-drop reordering
+  category        String   @default("general") // general, health, learning, jobs, finance, focus
+  isRecurring     Boolean  @default(false) // recurring task flag
+  recurType       String?  // daily|weekly|weekdays|custom
+  recurDays       String?  // JSON array of days e.g. ["mon","wed","fri"]
+  roadmapId       Int?     // links to JobRoadmap
+  certId          Int?     // links to CertRoadmap for study plan todos
+  // Progress tracking — agents fill incrementally
+  progress        Int      @default(0)   // 0-100 percentage
+  progressCurrent Float    @default(0)   // current value
+  progressTarget  Float    @default(0)   // target value
+  progressUnit    String   @default("")  // "steps", "minutes", "pages", etc.
+  autoComplete    Boolean  @default(false) // auto-complete at 100%
+  aiGenerated     Boolean  @default(false) // created by an AI agent
+  createdAt       DateTime @default(now())
 }
 
 // Quest Chains — linked quest sequences

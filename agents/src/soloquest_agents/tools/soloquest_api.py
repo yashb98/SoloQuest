@@ -124,3 +124,31 @@ async def check_achievements() -> dict:
     res = await _client.post("/api/achievements/check")
     res.raise_for_status()
     return res.json()
+
+
+async def update_quest_progress(quest_id: int, progress_current: float,
+                                 progress_target: float | None = None,
+                                 progress_unit: str | None = None) -> dict:
+    """Update quest progress bar. Auto-completes if autoComplete is enabled and hits 100%."""
+    data: dict = {"questId": quest_id, "progressCurrent": progress_current}
+    if progress_target is not None:
+        data["progressTarget"] = progress_target
+    if progress_unit is not None:
+        data["progressUnit"] = progress_unit
+    res = await _client.post("/api/quests/progress", json=data)
+    res.raise_for_status()
+    return res.json()
+
+
+async def update_todo_progress(todo_id: int, progress_current: float,
+                                progress_target: float | None = None,
+                                progress_unit: str | None = None) -> dict:
+    """Update todo progress bar. Auto-completes if autoComplete is enabled and hits 100%."""
+    data: dict = {"todoId": todo_id, "progressCurrent": progress_current}
+    if progress_target is not None:
+        data["progressTarget"] = progress_target
+    if progress_unit is not None:
+        data["progressUnit"] = progress_unit
+    res = await _client.post("/api/todos/progress", json=data)
+    res.raise_for_status()
+    return res.json()

@@ -1,3 +1,4 @@
+
 # SoloQuest Web App (`apps/web/`)
 
 > Part of the SoloQuest monorepo. See root `CLAUDE.md` for full architecture.

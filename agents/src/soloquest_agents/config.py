@@ -10,8 +10,8 @@ SOLOQUEST_API_TOKEN = os.getenv("SOLOQUEST_API_TOKEN", "")
 
 # LLM Providers
 KIMI_API_KEY = os.getenv("KIMI_API_KEY", "")
-KIMI_BASE_URL = os.getenv("KIMI_BASE_URL", "https://api.kimi.ai/v1")
-KIMI_MODEL = os.getenv("KIMI_MODEL", "kimi")
+KIMI_BASE_URL = os.getenv("KIMI_BASE_URL", "https://api.kimi.com/coding/")
+KIMI_MODEL = os.getenv("KIMI_MODEL", "Kimi-k2.5")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
 

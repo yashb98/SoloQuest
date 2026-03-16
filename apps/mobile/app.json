@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "SoloQuest",
+    "slug": "soloquest",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "soloquest",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.soloquest.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "SoloQuest reads your step count and sleep data to auto-complete health quests.",
+        "NSHealthUpdateUsageDescription": "SoloQuest tracks your health progress for gamified productivity."
+      }
+    },
+    "android": {
+      "package": "com.soloquest.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FAF8F5"
+      },
+      "permissions": [
+        "ACTIVITY_RECOGNITION",
+        "RECEIVE_BOOT_COMPLETED",
+        "FOREGROUND_SERVICE"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      "expo-task-manager",
+      "expo-background-fetch"
+    ]
+  }
+}
