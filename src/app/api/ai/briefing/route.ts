@@ -62,7 +62,8 @@ export async function GET() {
     return NextResponse.json({ briefing: briefingText, cached: false });
   } catch (error) {
     console.error("Briefing generation failed:", error);
-    const fallback = `Hunter ${hunter.hunterName}. Rank ${hunter.rank}-${hunter.level}. Streak: ${hunter.streak} days. ${quests.length} quests await. Begin.`;
+    const { rankLevel } = await import("@/lib/xp");
+    const fallback = `Hunter ${hunter.hunterName}. Rank ${hunter.rank}-${rankLevel(hunter.level)}. Streak: ${hunter.streak} days. ${quests.length} quests await. Begin.`;
     return NextResponse.json({ briefing: fallback, cached: false, fallback: true });
   }
 }

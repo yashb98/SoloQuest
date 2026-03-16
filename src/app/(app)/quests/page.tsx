@@ -77,6 +77,7 @@ export default function QuestsPage() {
             xp: data.didLevelUp ? 0 : hunter.xp + data.xpEarned,
             gold: hunter.gold + data.goldEarned + (data.levelUpGoldBonus || 0),
             level: data.newLevel || hunter.level,
+            rankLevel: data.newRankLevel || hunter.rankLevel,
             rank: data.newRank || hunter.rank,
           });
         }

@@ -6,15 +6,33 @@ export function xpForLevel(n: number): number {
   return Math.floor(100 * n * Math.pow(1.15, n / 10));
 }
 
-// --- Rank letter from level (Blueprint Step 2) ---
+// --- Rank boundaries: [startLevel, endLevel] inclusive ---
+export const RANK_BOUNDARIES: Record<string, { start: number; end: number }> = {
+  E:        { start: 1,  end: 9 },
+  D:        { start: 10, end: 18 },
+  C:        { start: 19, end: 26 },
+  B:        { start: 27, end: 39 },
+  A:        { start: 40, end: 54 },
+  S:        { start: 55, end: 65 },
+  National: { start: 66, end: Infinity },
+};
+
+// --- Rank letter from global level (Blueprint Step 2) ---
 export function rankFromLevel(level: number): string {
   if (level < 10) return "E";
-  if (level < 20) return "D";
-  if (level < 30) return "C";
+  if (level < 19) return "D";
+  if (level < 27) return "C";
   if (level < 40) return "B";
-  if (level < 50) return "A";
-  if (level < 60) return "S";
+  if (level < 55) return "A";
+  if (level < 66) return "S";
   return "National";
+}
+
+// --- Rank-relative level (resets to 1 at each rank boundary) ---
+export function rankLevel(globalLevel: number): number {
+  const rank = rankFromLevel(globalLevel);
+  const boundary = RANK_BOUNDARIES[rank];
+  return globalLevel - boundary.start + 1;
 }
 
 // --- Rank info with colors and ceremonies ---

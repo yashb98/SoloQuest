@@ -33,14 +33,14 @@ export default function TopBar() {
             <div className="flex items-center gap-3">
               <span className="text-lg font-bold text-sq-text tracking-[-0.02em]">{hunter.hunterName}</span>
               <Link href="/exam" className={`rounded-full ${isGateLocked ? "animate-pulse ring-2 ring-sq-gold ring-offset-1 ring-offset-sq-panel" : ""}`}>
-                <StatBadge rank={hunter.rank} level={hunter.level} />
+                <StatBadge rank={hunter.rank} level={hunter.rankLevel} />
               </Link>
             </div>
             <div className="mt-1 max-w-[300px]">
               {/* Inline XP bar for real-time updates */}
               <div className="w-full">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[13px] font-medium text-sq-muted">Level {hunter.level} - </span>
+                  <span className="text-[13px] font-medium text-sq-muted">{hunter.rank}-{hunter.rankLevel} </span>
                   <span className="text-[13px] font-medium text-sq-muted">
                     - ({hunter.xp.toLocaleString()} / {hunter.xpToNext.toLocaleString()} XP)
                   </span>

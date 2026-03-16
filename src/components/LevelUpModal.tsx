@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { rankLevel } from "@/lib/xp";
 
 interface LevelUpModalProps {
   isOpen: boolean;
@@ -78,7 +79,7 @@ export default function LevelUpModal({
               <p className="text-lg text-sq-text">
                 {levelsGained > 1 ? `+${levelsGained} Levels! ` : ""}You have reached{" "}
                 <span className="text-sq-accent font-bold">
-                  {newRank}-{newLevel}
+                  {newRank}-{rankLevel(newLevel)}
                 </span>
               </p>
               <p className="text-sm text-sq-muted">

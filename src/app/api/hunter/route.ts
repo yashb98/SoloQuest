@@ -1,6 +1,7 @@
 // api/hunter/route.ts — GET hunter profile
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { rankLevel } from "@/lib/xp";
 
 export const dynamic = "force-dynamic";
 
@@ -14,5 +15,8 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json(hunter);
+  return NextResponse.json({
+    ...hunter,
+    rankLevel: rankLevel(hunter.level),
+  });
 }

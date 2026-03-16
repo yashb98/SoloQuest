@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
         questTitle: quest.title,
         goldLost: levelResult.goldBonus,
         reason: "level_up_bonus",
-        description: `Level Up to ${levelResult.newRank}-${levelResult.newLevel}: +${levelResult.goldBonus}G bonus`,
+        description: `Rank Up to ${levelResult.newRank}: +${levelResult.goldBonus}G bonus`,
       },
     });
   }
@@ -174,6 +174,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const { rankLevel: rl } = await import("@/lib/xp");
+
   return NextResponse.json({
     success: true,
     xpEarned,
@@ -183,6 +185,7 @@ export async function POST(req: NextRequest) {
     didLevelUp: levelResult.didLevelUp,
     levelsGained: levelResult.levelsGained,
     newLevel: levelResult.newLevel,
+    newRankLevel: rl(levelResult.newLevel),
     newRank: levelResult.newRank,
     isGateLocked: levelResult.isGateLocked,
     gateLevel: levelResult.gateLevel,

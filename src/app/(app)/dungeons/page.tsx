@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Trophy, Swords, CheckCircle, Undo2, ChevronDown, Shield, AlertTriangle, Calendar, Lightbulb, Target } from "lucide-react";
 import { getDungeonDetail } from "@/lib/quest-details";
 import type { DungeonDetail } from "@/lib/quest-details";
+import { rankFromLevel, rankLevel as getRankLevel } from "@/lib/xp";
 
 interface Dungeon {
   id: number;
@@ -250,7 +251,7 @@ function DungeonCard({ dungeon, actionId, activeDungeon, expanded, onToggleExpan
         {dungeon.minLevel > 1 && !dungeon.isCompleted && (
           <div className="flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5 text-sq-muted" />
-            <span className="text-[12px] text-sq-muted font-medium">Requires Level {dungeon.minLevel}</span>
+            <span className="text-[12px] text-sq-muted font-medium">Requires {rankFromLevel(dungeon.minLevel)}-{getRankLevel(dungeon.minLevel)}</span>
           </div>
         )}
 
@@ -277,7 +278,7 @@ function DungeonCard({ dungeon, actionId, activeDungeon, expanded, onToggleExpan
             </button>
           ) : (
             <div className="w-full text-center py-2.5 rounded-xl bg-sq-hover text-sq-muted text-[14px] font-semibold">
-              🔒 Requires Level {dungeon.minLevel}
+              🔒 Requires {rankFromLevel(dungeon.minLevel)}-{getRankLevel(dungeon.minLevel)}
             </div>
           )
         )}

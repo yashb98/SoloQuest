@@ -10,6 +10,7 @@ interface Hunter {
   hunterName: string;
   rank: string;
   level: number;
+  rankLevel: number;
   xp: number;
   xpToNext: number;
   gold: number;
@@ -63,7 +64,7 @@ export default function StatsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="sq-panel p-4 text-center">
           <Trophy className="w-5 h-5 text-sq-accent mx-auto mb-1" />
-          <p className="text-lg font-bold text-sq-accent">{hunter.rank}-{hunter.level}</p>
+          <p className="text-lg font-bold text-sq-accent">{hunter.rank}-{hunter.rankLevel}</p>
           <p className="text-[12px] text-sq-muted font-medium uppercase">Rank</p>
         </div>
         <div className="sq-panel p-4 text-center">

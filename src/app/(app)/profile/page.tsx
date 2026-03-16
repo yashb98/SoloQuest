@@ -12,6 +12,7 @@ interface Hunter {
   title: string;
   rank: string;
   level: number;
+  rankLevel: number;
   xp: number;
   xpToNext: number;
   gold: number;
@@ -102,7 +103,7 @@ export default function ProfilePage() {
           <div>
             <h2 className="font-bold text-xl text-sq-text">{hunter.hunterName}</h2>
             <div className="flex items-center gap-2 mt-1">
-              <StatBadge rank={hunter.rank} level={hunter.level} />
+              <StatBadge rank={hunter.rank} level={hunter.rankLevel} />
               {classConfig && <span className={`text-xs font-medium ${classConfig.color}`}>{classConfig.label}</span>}
             </div>
             {hunter.title !== "Newcomer" && (
@@ -117,7 +118,7 @@ export default function ProfilePage() {
           </button>
         )}
 
-        <XPBar currentXP={hunter.xp} xpToNext={hunter.xpToNext} level={hunter.level} />
+        <XPBar currentXP={hunter.xp} xpToNext={hunter.xpToNext} level={hunter.rankLevel} />
       </div>
 
       {/* Quick Stats */}

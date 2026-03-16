@@ -2,7 +2,7 @@
 
 interface StatBadgeProps {
   rank: string;
-  level: number;
+  level: number; // rank-relative level
 }
 
 const rankStyles: Record<string, string> = {

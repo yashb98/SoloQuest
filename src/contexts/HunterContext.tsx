@@ -9,6 +9,7 @@ export interface HunterData {
   title: string;
   rank: string;
   level: number;
+  rankLevel: number;
   xp: number;
   xpToNext: number;
   gold: number;

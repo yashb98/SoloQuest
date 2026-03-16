@@ -15,7 +15,7 @@ export default function XPBar({ currentXP, xpToNext, level }: XPBarProps) {
     <div className="w-full">
       <div className="flex items-center justify-between mb-1">
         <span className="text-[13px] font-medium text-sq-muted">
-          Level {level } - 
+          Lv. {level}
         </span>
           
         <span className="text-[13px] font-medium text-sq-muted">

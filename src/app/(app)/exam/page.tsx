@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Clock, Shield, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
-import { GATE_LEVELS, isGateLevel } from "@/lib/xp";
+import { GATE_LEVELS, isGateLevel, rankFromLevel, rankLevel } from "@/lib/xp";
 
 interface Question {
   id: string;
@@ -38,6 +38,7 @@ type ExamState = "idle" | "generating" | "active" | "submitting" | "results";
 export default function ExamPage() {
   const [hunter, setHunter] = useState<{
     level: number;
+    rankLevel: number;
     rank: string;
     xp: number;
     xpToNext: number;
@@ -167,12 +168,12 @@ export default function ExamPage() {
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-sq-blue" />
               <span className="font-semibold text-sq-text">
-                Next Gate: Level {nextGateLevel}
+                Next Gate: {rankFromLevel(nextGateLevel)}-{rankLevel(nextGateLevel)}
               </span>
             </div>
             <p className="text-sm text-sq-muted">
-              You are currently Level {hunter?.level}. Reach Level{" "}
-              {nextGateLevel} to unlock the gate exam.
+              You are currently {hunter?.rank}-{hunter?.rankLevel}. Reach{" "}
+              {rankFromLevel(nextGateLevel)}-{rankLevel(nextGateLevel)} to unlock the gate exam.
             </p>
           </div>
         )}
