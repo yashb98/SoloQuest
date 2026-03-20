@@ -180,14 +180,14 @@ export async function POST() {
 
     await prisma.quest.updateMany({
       where: { tier: "weekly" },
-      data: { isCompleted: false, completedAt: null },
+      data: { isCompleted: false, completedAt: null, progress: 0, progressCurrent: 0 },
     });
   }
 
-  // Reset all daily quests for today
+  // Reset all daily quests for today (keep progress targets, reset current progress)
   await prisma.quest.updateMany({
     where: { isDaily: true },
-    data: { isCompleted: false, completedAt: null },
+    data: { isCompleted: false, completedAt: null, progress: 0, progressCurrent: 0 },
   });
 
   // Update hunter (lastStreakDate already set by the lock above)

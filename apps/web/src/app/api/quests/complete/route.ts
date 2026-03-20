@@ -1,7 +1,7 @@
 // api/quests/complete/route.ts — Complete or Uncomplete quest + XP + level-up + stats
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { effectiveXP, effectiveGold } from "@/lib/xp";
+import { effectiveXP, effectiveGold, RANK_META } from "@/lib/xp";
 import { processXPGain } from "@/lib/leveling";
 
 export async function POST(req: NextRequest) {
@@ -110,9 +110,16 @@ export async function POST(req: NextRequest) {
   const levelResult = processXPGain(hunter.xp, hunter.level, hunter.xpToNext, xpEarned);
 
   const validStats = ["vitality", "intel", "hustle", "wealth", "focus", "agentIQ"];
-  const statIncrement: Record<string, number> = {};
+  const statUpdate: Record<string, { increment: number }> = {};
+  let actualStatGain = 0;
   if (validStats.includes(quest.statTarget)) {
-    statIncrement[quest.statTarget] = quest.statGain;
+    // Enforce rank-based stat cap (E=100, D=250, C=400, B=600, A=800, S/National=1000)
+    const rankMeta = RANK_META[hunter.rank as keyof typeof RANK_META] || RANK_META.E;
+    const currentStatVal = (hunter as Record<string, unknown>)[quest.statTarget] as number || 0;
+    actualStatGain = Math.min(quest.statGain, rankMeta.statCap - currentStatVal);
+    if (actualStatGain > 0) {
+      statUpdate[quest.statTarget] = { increment: actualStatGain };
+    }
   }
 
   await prisma.hunter.update({
@@ -124,7 +131,7 @@ export async function POST(req: NextRequest) {
       xpToNext: levelResult.newXPToNext,
       gold: { increment: goldEarned + levelResult.goldBonus },
       statPoints: { increment: levelResult.statPointsEarned },
-      ...statIncrement,
+      ...statUpdate,
     },
   });
 

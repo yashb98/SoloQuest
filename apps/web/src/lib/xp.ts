@@ -42,13 +42,13 @@ export const RANK_CONFIG: Record<string, {
   ceremony: string;
   statCap: number;
 }> = {
-  E: { color: "#9CA3AF", frameColor: "Grey", ceremony: "None (starter)", statCap: 20 },
-  D: { color: "#22C55E", frameColor: "Green", ceremony: "Green aura flash", statCap: 35 },
-  C: { color: "#3B82F6", frameColor: "Blue", ceremony: "Blue lightning burst", statCap: 50 },
-  B: { color: "#E2B04A", frameColor: "Gold", ceremony: "Gold particle storm", statCap: 70 },
-  A: { color: "#EF4444", frameColor: "Red", ceremony: "Red flame pillar", statCap: 90 },
-  S: { color: "#A855F7", frameColor: "Purple", ceremony: "Purple void rift", statCap: 120 },
-  National: { color: "#F59E0B", frameColor: "Rainbow", ceremony: "Full-screen transformation", statCap: 999 },
+  E: { color: "#9CA3AF", frameColor: "Grey", ceremony: "None (starter)", statCap: 100 },
+  D: { color: "#22C55E", frameColor: "Green", ceremony: "Green aura flash", statCap: 250 },
+  C: { color: "#3B82F6", frameColor: "Blue", ceremony: "Blue lightning burst", statCap: 400 },
+  B: { color: "#E2B04A", frameColor: "Gold", ceremony: "Gold particle storm", statCap: 600 },
+  A: { color: "#EF4444", frameColor: "Red", ceremony: "Red flame pillar", statCap: 800 },
+  S: { color: "#A855F7", frameColor: "Purple", ceremony: "Purple void rift", statCap: 1000 },
+  National: { color: "#F59E0B", frameColor: "Rainbow", ceremony: "Full-screen transformation", statCap: 1000 },
 };
 
 // --- Gate levels (hard cap — exam required to pass) ---
