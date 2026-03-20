@@ -97,10 +97,20 @@ export async function POST(req: NextRequest) {
       data: { category, amount, description },
     });
 
-    // Deduct gold (can go negative = debt)
+    // Wealth stat penalty: 1 point per £5 spent (min 1)
+    const wealthPenalty = Math.max(1, Math.floor(amount / 5));
+
+    const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
+    const currentWealth = hunter?.wealth ?? 0;
+    const safeWealthLoss = Math.min(wealthPenalty, currentWealth); // never below 0
+
+    // Deduct gold + wealth stat
     await prisma.hunter.update({
       where: { id: 1 },
-      data: { gold: { decrement: goldCost } },
+      data: {
+        gold: { decrement: goldCost },
+        ...(safeWealthLoss > 0 ? { wealth: { decrement: safeWealthLoss } } : {}),
+      },
     });
 
     // Log as penalty for tracking
@@ -108,16 +118,18 @@ export async function POST(req: NextRequest) {
       data: {
         goldLost: goldCost,
         reason: "spending",
-        description: `${description} (£${amount.toFixed(2)})`,
+        description: `${description} (£${amount.toFixed(2)}) [-${safeWealthLoss} wealth]`,
       },
     });
 
-    const hunter = await prisma.hunter.findFirst({ where: { id: 1 } });
+    const updatedHunter = await prisma.hunter.findFirst({ where: { id: 1 } });
 
     return NextResponse.json({
       success: true,
       goldDeducted: goldCost,
-      remainingGold: hunter?.gold ?? 0,
+      wealthLost: safeWealthLoss,
+      remainingGold: updatedHunter?.gold ?? 0,
+      remainingWealth: updatedHunter?.wealth ?? 0,
     });
   }
 

@@ -132,17 +132,25 @@ export async function POST() {
   });
 
   let questPenalty = 0;
+  // Track stat losses from failed quests: { vitality: -3, intel: -2, ... }
+  const statLosses: Record<string, number> = {};
   if (failedDailyQuests.length > 0) {
     for (const fq of failedDailyQuests) {
       const penalty = fq.goldBase;
       questPenalty += penalty;
+      // Stat penalty = half the statGain you would have earned (min 1)
+      const statPenalty = Math.max(1, Math.floor(fq.statGain / 2));
+      const validStats = ["vitality", "intel", "hustle", "wealth", "focus", "agentIQ"];
+      if (validStats.includes(fq.statTarget)) {
+        statLosses[fq.statTarget] = (statLosses[fq.statTarget] || 0) + statPenalty;
+      }
       await prisma.penalty.create({
         data: {
           questId: fq.id,
           questTitle: fq.title,
           goldLost: penalty,
           reason: "quest_failed",
-          description: `Failed daily: ${fq.title}`,
+          description: `Failed daily: ${fq.title} (-${statPenalty} ${fq.statTarget})`,
         },
       });
     }
@@ -166,13 +174,19 @@ export async function POST() {
         const penalty = fq.goldBase;
         weeklyPenalty += penalty;
         failedWeeklyCount++;
+        // Weekly failures hit harder: full statGain as penalty
+        const statPenalty = fq.statGain;
+        const validStats = ["vitality", "intel", "hustle", "wealth", "focus", "agentIQ"];
+        if (validStats.includes(fq.statTarget)) {
+          statLosses[fq.statTarget] = (statLosses[fq.statTarget] || 0) + statPenalty;
+        }
         await prisma.penalty.create({
           data: {
             questId: fq.id,
             questTitle: fq.title,
             goldLost: penalty,
             reason: "quest_failed",
-            description: `Failed weekly: ${fq.title}`,
+            description: `Failed weekly: ${fq.title} (-${statPenalty} ${fq.statTarget})`,
           },
         });
       }
@@ -190,6 +204,28 @@ export async function POST() {
     data: { isCompleted: false, completedAt: null, progress: 0, progressCurrent: 0 },
   });
 
+  // Streak break = 5% off ALL stats
+  if (newStreak === 0 && hunter.streak > 0) {
+    const allStats = ["vitality", "intel", "hustle", "wealth", "focus", "agentIQ"];
+    for (const stat of allStats) {
+      const currentVal = (hunter as Record<string, unknown>)[stat] as number || 0;
+      const loss = Math.max(1, Math.floor(currentVal * 0.05));
+      statLosses[stat] = (statLosses[stat] || 0) + loss;
+    }
+  }
+
+  // Build stat decrements (never go below 0)
+  // Re-read hunter to get latest values after any shield updates
+  const freshHunter = await prisma.hunter.findFirst({ where: { id: 1 } });
+  const statDecrements: Record<string, { decrement: number }> = {};
+  for (const [stat, loss] of Object.entries(statLosses)) {
+    const currentVal = (freshHunter as Record<string, unknown>)?.[stat] as number || 0;
+    const safeLoss = Math.min(loss, currentVal); // never go below 0
+    if (safeLoss > 0) {
+      statDecrements[stat] = { decrement: safeLoss };
+    }
+  }
+
   // Update hunter (lastStreakDate already set by the lock above)
   const totalPenalty = questPenalty + weeklyPenalty;
   await prisma.hunter.update({
@@ -199,9 +235,16 @@ export async function POST() {
       bestStreak,
       title: newTitle,
       gold: { increment: bonusGold - goldPenalty - totalPenalty },
+      ...statDecrements,
       ...(isNewWeek ? { lastWeeklyReset: currentWeekStr } : {}),
     },
   });
+
+  // Convert stat decrements to plain numbers for response
+  const statPenalties: Record<string, number> = {};
+  for (const [stat, obj] of Object.entries(statDecrements)) {
+    statPenalties[stat] = obj.decrement;
+  }
 
   return NextResponse.json({
     success: true,
@@ -211,9 +254,11 @@ export async function POST() {
     goldPenalty,
     questPenalty,
     weeklyPenalty,
+    statPenalties,
     failedDailyCount: failedDailyQuests.length,
     failedWeeklyCount,
     shieldsUsed,
+    streakBroken: newStreak === 0 && hunter.streak > 0,
     questsReset: true,
     weeklyReset: isNewWeek && hunter.lastWeeklyReset !== currentWeekStr,
     date: today,
