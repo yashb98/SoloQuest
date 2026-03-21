@@ -32,6 +32,11 @@ interface CompletionReward {
   newLevel?: number;
   newRankLevel?: number;
   newRank?: string;
+  breakdown?: {
+    xp: { base: number; streakBonus: number; streakMultiplier: number; classBonus: number; classMatch: string | null; total: number };
+    gold: { base: number; hustleBonus: number; hustleStat: number; total: number };
+    stat: { target: string; gain: number; maxGain: number; capped: boolean };
+  };
 }
 
 const statLabels: Record<string, string> = {
@@ -83,7 +88,7 @@ export default function QuestsPage() {
           });
         }
 
-        // Show completion popup
+        // Show completion popup with breakdown
         setCompletionReward({
           questTitle: quest?.title || "Quest",
           xpEarned: data.xpEarned,
@@ -95,6 +100,7 @@ export default function QuestsPage() {
           newLevel: data.newLevel,
           newRankLevel: data.newRankLevel,
           newRank: data.newRank,
+          breakdown: data.breakdown,
         });
 
         // Auto-dismiss after 3.5 seconds
@@ -214,21 +220,42 @@ export default function QuestsPage() {
 
                 {/* Rewards row */}
                 <div className="flex items-center gap-3 justify-center">
-                  <div className="flex items-center gap-1.5 bg-[#FFF3ED] px-3 py-1.5 rounded-full">
-                    <Zap className="w-4 h-4 text-sq-accent" />
-                    <span className="text-[14px] font-bold text-sq-accent">+{completionReward.xpEarned} XP</span>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <div className="flex items-center gap-1.5 bg-[#FFF3ED] px-3 py-1.5 rounded-full">
+                      <Zap className="w-4 h-4 text-sq-accent" />
+                      <span className="text-[14px] font-bold text-sq-accent">+{completionReward.xpEarned} XP</span>
+                    </div>
+                    {completionReward.breakdown && (completionReward.breakdown.xp.streakBonus > 0 || completionReward.breakdown.xp.classBonus > 0) && (
+                      <span className="text-[10px] text-sq-muted">
+                        {completionReward.breakdown.xp.base} base
+                        {completionReward.breakdown.xp.streakBonus > 0 && ` +${completionReward.breakdown.xp.streakBonus} streak`}
+                        {completionReward.breakdown.xp.classBonus > 0 && ` +${completionReward.breakdown.xp.classBonus} class`}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1.5 bg-[#FFFBEB] px-3 py-1.5 rounded-full">
-                    <Coins className="w-4 h-4 text-sq-gold" />
-                    <span className="text-[14px] font-bold text-sq-gold">
-                      +{completionReward.goldEarned + completionReward.levelUpGoldBonus} G
-                    </span>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <div className="flex items-center gap-1.5 bg-[#FFFBEB] px-3 py-1.5 rounded-full">
+                      <Coins className="w-4 h-4 text-sq-gold" />
+                      <span className="text-[14px] font-bold text-sq-gold">
+                        +{completionReward.goldEarned + completionReward.levelUpGoldBonus} G
+                      </span>
+                    </div>
+                    {completionReward.breakdown && completionReward.breakdown.gold.hustleBonus > 0 && (
+                      <span className="text-[10px] text-sq-muted">
+                        {completionReward.breakdown.gold.base} base +{completionReward.breakdown.gold.hustleBonus} hustle
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1.5 bg-[#F0FDF4] px-3 py-1.5 rounded-full">
-                    <TrendingUp className="w-4 h-4 text-sq-green" />
-                    <span className="text-[14px] font-bold text-sq-green">
-                      +{completionReward.statGain} {statLabels[completionReward.statTarget] || completionReward.statTarget}
-                    </span>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <div className="flex items-center gap-1.5 bg-[#F0FDF4] px-3 py-1.5 rounded-full">
+                      <TrendingUp className="w-4 h-4 text-sq-green" />
+                      <span className="text-[14px] font-bold text-sq-green">
+                        +{completionReward.statGain} {statLabels[completionReward.statTarget] || completionReward.statTarget}
+                      </span>
+                    </div>
+                    {completionReward.breakdown?.stat.capped && (
+                      <span className="text-[10px] text-amber-500">capped by rank</span>
+                    )}
                   </div>
                 </div>
 

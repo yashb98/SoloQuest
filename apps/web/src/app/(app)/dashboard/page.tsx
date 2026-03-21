@@ -132,12 +132,15 @@ export default function DashboardPage() {
           });
         }
 
-        // Toast for XP + gold
+        // Toast for XP + gold with breakdown
+        const bd = data.breakdown;
+        const xpDetail = bd ? `${bd.xp.base} base${bd.xp.streakBonus > 0 ? ` +${bd.xp.streakBonus} streak` : ""}${bd.xp.classBonus > 0 ? ` +${bd.xp.classBonus} class` : ""}` : "";
+        const goldDetail = bd?.gold.hustleBonus > 0 ? ` (${bd.gold.base} +${bd.gold.hustleBonus} hustle)` : "";
         addToast({
           type: "xp",
           title: `+${data.xpEarned} XP`,
-          description: `+${data.goldEarned}G earned`,
-          duration: 2500,
+          description: `+${data.goldEarned}G${goldDetail}${xpDetail ? ` | ${xpDetail}` : ""}`,
+          duration: 3000,
         });
 
         if (data.statGain && data.statTarget) {

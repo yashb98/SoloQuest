@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Lock, Check, X, Gift, ArrowRight } from "lucide-react";
+import { Coins, Lock, Check, X, Gift, ArrowRight, Receipt, Clock } from "lucide-react";
 import { useHunter } from "@/contexts/HunterContext";
 
 interface Reward {
@@ -42,8 +42,18 @@ export default function ShopPage() {
 
   // Custom redeem state
   const [customAmount, setCustomAmount] = useState<string>("");
+  const [redeemReason, setRedeemReason] = useState<string>("");
   const [isCustomRedeeming, setIsCustomRedeeming] = useState(false);
   const [inputMode, setInputMode] = useState<"gold" | "pounds">("pounds");
+
+  // Transactions
+  const [activeTab, setActiveTab] = useState<"shop" | "transactions">("shop");
+  const [transactions, setTransactions] = useState<Array<{
+    id: number;
+    goldLost: number;
+    description: string;
+    createdAt: string;
+  }>>([]);
 
   // Keep local hunter in sync with context
   useEffect(() => {
@@ -57,13 +67,15 @@ export default function ShopPage() {
   }, [hunterCtx]);
 
   const fetchData = useCallback(async () => {
-    const [rewardsRes, hunterRes] = await Promise.all([
+    const [rewardsRes, hunterRes, txRes] = await Promise.all([
       fetch("/api/rewards"),
       fetch("/api/hunter"),
+      fetch("/api/rewards?transactions=true"),
     ]);
     setRewards(await rewardsRes.json());
     const h = await hunterRes.json();
     setHunter({ gold: h.gold, rank: h.rank, goldToMoneyRatio: h.goldToMoneyRatio ?? 0.10 });
+    setTransactions(await txRes.json());
   }, []);
 
   useEffect(() => {
@@ -103,16 +115,18 @@ export default function ShopPage() {
     const res = await fetch("/api/rewards", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goldAmount }),
+      body: JSON.stringify({ goldAmount, reason: redeemReason }),
     });
     const data = await res.json();
     if (data.success) {
       const rv = (goldAmount * (hunter.goldToMoneyRatio ?? 0.10)).toFixed(2);
-      setRedeemedReward(`Custom Redeem: ${goldAmount}G (£${rv})`);
+      const reasonLabel = redeemReason.trim() ? ` — ${redeemReason.trim()}` : "";
+      setRedeemedReward(`${goldAmount}G (£${rv})${reasonLabel}`);
       setShowRedeemModal(true);
       setCustomAmount("");
+      setRedeemReason("");
       fetchData();
-      refreshHunter(); // sync TopBar gold
+      refreshHunter();
     }
     setIsCustomRedeeming(false);
   };
@@ -157,6 +171,93 @@ export default function ShopPage() {
         )}
       </div>
 
+      {/* Tab switcher */}
+      <div className="flex bg-sq-hover rounded-xl p-1 gap-1">
+        <button
+          onClick={() => setActiveTab("shop")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[13px] font-bold transition-all ${
+            activeTab === "shop"
+              ? "bg-sq-panel text-sq-gold shadow-sm"
+              : "text-sq-muted hover:text-sq-text"
+          }`}
+        >
+          <Gift className="w-4 h-4" />
+          Shop
+        </button>
+        <button
+          onClick={() => setActiveTab("transactions")}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[13px] font-bold transition-all ${
+            activeTab === "transactions"
+              ? "bg-sq-panel text-sq-gold shadow-sm"
+              : "text-sq-muted hover:text-sq-text"
+          }`}
+        >
+          <Receipt className="w-4 h-4" />
+          Transactions
+          {transactions.length > 0 && (
+            <span className="bg-sq-gold/20 text-sq-gold text-[11px] px-1.5 py-0.5 rounded-full font-bold">
+              {transactions.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === "transactions" && (
+        <div className="space-y-3">
+          {transactions.length === 0 ? (
+            <div className="sq-panel p-8 text-center">
+              <Receipt className="w-10 h-10 text-sq-muted mx-auto mb-3" />
+              <p className="text-sq-muted text-sm">No redemptions yet. Earn gold and redeem it!</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between text-sm text-sq-muted">
+                <span>{transactions.length} transaction{transactions.length !== 1 ? "s" : ""}</span>
+                <span>Total: {transactions.reduce((sum, t) => sum + t.goldLost, 0).toLocaleString()}G</span>
+              </div>
+              {transactions.map((tx) => {
+                // Parse description: "Reason — 500G (£50.00)" or "Custom Redeem: 500G (£50.00)"
+                const parts = tx.description.split(" — ");
+                const reason = parts.length > 1 ? parts[0] : tx.description.split(":").length > 1 ? tx.description.split(": ")[0] : "Custom Redeem";
+                const amountPart = parts.length > 1 ? parts[1] : tx.description.includes(":") ? tx.description.split(": ")[1] : tx.description;
+                const poundsMatch = amountPart.match(/£([\d.]+)/);
+                const pounds = poundsMatch ? poundsMatch[1] : (tx.goldLost * 0.10).toFixed(2);
+                const date = new Date(tx.createdAt);
+                const dateStr = date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+                const timeStr = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+                return (
+                  <motion.div
+                    key={tx.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="sq-panel p-4 flex items-center justify-between"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-sq-gold/10 flex items-center justify-center shrink-0">
+                        <Coins className="w-4 h-4 text-sq-gold" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-semibold text-sq-text truncate">{reason}</p>
+                        <div className="flex items-center gap-2 text-[12px] text-sq-muted">
+                          <Clock className="w-3 h-3" />
+                          <span>{dateStr} at {timeStr}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className="text-[14px] font-bold text-sq-gold">-{tx.goldLost.toLocaleString()}G</p>
+                      <p className="text-[12px] text-sq-muted">£{pounds}</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </>
+          )}
+        </div>
+      )}
+
+      {activeTab === "shop" && <>
       {/* Custom Redeem Card */}
       <div className="sq-panel p-5 border-2 border-sq-gold/30 space-y-4">
         <div className="flex items-center gap-2">
@@ -260,6 +361,15 @@ export default function ShopPage() {
           )}
         </div>
 
+        {/* Reason input */}
+        <input
+          type="text"
+          value={redeemReason}
+          onChange={(e) => setRedeemReason(e.target.value)}
+          placeholder="What's this for? (e.g. Coffee, Movie, Treat...)"
+          className="w-full bg-sq-hover border border-sq-border rounded-xl px-4 py-2.5 text-sm text-sq-text placeholder-sq-muted focus:outline-none focus:border-sq-gold/50 transition-colors"
+        />
+
         {/* Redeem button */}
         <button
           onClick={handleCustomRedeem}
@@ -347,6 +457,8 @@ export default function ShopPage() {
           </div>
         </div>
       ))}
+
+      </>}
 
       {/* Redeem Success Modal */}
       <AnimatePresence>

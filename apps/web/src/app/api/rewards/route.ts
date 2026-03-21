@@ -4,7 +4,18 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+
+  // /api/rewards?transactions=true — return redemption history
+  if (searchParams.get("transactions") === "true") {
+    const transactions = await prisma.penalty.findMany({
+      where: { reason: "custom_redeem" },
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json(transactions);
+  }
+
   const rewards = await prisma.reward.findMany({
     orderBy: [{ tier: "asc" }, { costGold: "asc" }],
   });
@@ -64,7 +75,7 @@ export async function POST(req: NextRequest) {
 // PUT — Custom gold redemption (redeem any amount)
 export async function PUT(req: NextRequest) {
   const body = await req.json();
-  const { goldAmount } = body as { goldAmount: number };
+  const { goldAmount, reason } = body as { goldAmount: number; reason?: string };
 
   if (!goldAmount || goldAmount <= 0 || !Number.isInteger(goldAmount)) {
     return NextResponse.json(
@@ -86,6 +97,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const realValue = goldAmount * (hunter.goldToMoneyRatio ?? 0.10);
+  const reasonText = reason?.trim() || "Custom Redeem";
 
   // Deduct gold
   await prisma.hunter.update({
@@ -93,12 +105,12 @@ export async function PUT(req: NextRequest) {
     data: { gold: { decrement: goldAmount } },
   });
 
-  // Log in Gold Ledger
+  // Log in Gold Ledger with user's reason
   await prisma.penalty.create({
     data: {
       goldLost: goldAmount,
       reason: "custom_redeem",
-      description: `Custom Redeem: ${goldAmount}G (£${realValue.toFixed(2)})`,
+      description: `${reasonText} — ${goldAmount}G (£${realValue.toFixed(2)})`,
     },
   });
 
@@ -106,6 +118,10 @@ export async function PUT(req: NextRequest) {
     success: true,
     goldSpent: goldAmount,
     realValue,
+    reason: reasonText,
     remainingGold: hunter.gold - goldAmount,
   });
 }
+
+// GET /api/rewards/transactions — handled by query param
+// (Next.js doesn't support multiple GET exports, so we handle via query param in GET above)

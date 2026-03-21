@@ -1,7 +1,7 @@
 // api/quests/complete/route.ts — Complete or Uncomplete quest + XP + level-up + stats
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { effectiveXP, effectiveGold, RANK_META } from "@/lib/xp";
+import { effectiveXP, effectiveGold, RANK_CONFIG } from "@/lib/xp";
 import { processXPGain } from "@/lib/leveling";
 
 export async function POST(req: NextRequest) {
@@ -107,6 +107,16 @@ export async function POST(req: NextRequest) {
   );
   const goldEarned = effectiveGold(quest.goldBase, hunter.hustle);
 
+  // Build breakdown for UI
+  const hustleBonus = Math.floor(hunter.hustle / 10);
+  const { streakMultiplier: sm, CLASS_BUFFS: cb } = await import("@/lib/xp");
+  const streakMult = sm(hunter.streak);
+  const classBuff = cb[hunter.class];
+  const classMatch = classBuff && classBuff.stat === quest.statTarget;
+  const xpAfterStreak = Math.floor(quest.xpBase * streakMult);
+  const xpFromStreak = xpAfterStreak - quest.xpBase;
+  const xpFromClass = classMatch ? Math.floor(xpAfterStreak * (classBuff.multiplier - 1)) : 0;
+
   const levelResult = processXPGain(hunter.xp, hunter.level, hunter.xpToNext, xpEarned);
 
   const validStats = ["vitality", "intel", "hustle", "wealth", "focus", "agentIQ"];
@@ -114,7 +124,7 @@ export async function POST(req: NextRequest) {
   let actualStatGain = 0;
   if (validStats.includes(quest.statTarget)) {
     // Enforce rank-based stat cap (E=100, D=250, C=400, B=600, A=800, S/National=1000)
-    const rankMeta = RANK_META[hunter.rank as keyof typeof RANK_META] || RANK_META.E;
+    const rankMeta = RANK_CONFIG[hunter.rank as keyof typeof RANK_CONFIG] || RANK_CONFIG.E;
     const currentStatVal = (hunter as Record<string, unknown>)[quest.statTarget] as number || 0;
     actualStatGain = Math.min(quest.statGain, rankMeta.statCap - currentStatVal);
     if (actualStatGain > 0) {
@@ -187,7 +197,30 @@ export async function POST(req: NextRequest) {
     success: true,
     xpEarned,
     goldEarned,
-    statGain: quest.statGain,
+    // Breakdown: what contributed to the totals
+    breakdown: {
+      xp: {
+        base: quest.xpBase,
+        streakBonus: xpFromStreak,
+        streakMultiplier: streakMult,
+        classBonus: xpFromClass,
+        classMatch: classMatch ? `${hunter.class} +10%` : null,
+        total: xpEarned,
+      },
+      gold: {
+        base: quest.goldBase,
+        hustleBonus,
+        hustleStat: hunter.hustle,
+        total: goldEarned,
+      },
+      stat: {
+        target: quest.statTarget,
+        gain: actualStatGain,
+        maxGain: quest.statGain,
+        capped: actualStatGain < quest.statGain,
+      },
+    },
+    statGain: actualStatGain,
     statTarget: quest.statTarget,
     didLevelUp: levelResult.didLevelUp,
     levelsGained: levelResult.levelsGained,
